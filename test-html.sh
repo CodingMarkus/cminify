@@ -2,7 +2,7 @@
 
 assert()
 {
-	result="$(echo -e "$2" | ./build/cminify html -)"
+	result="$(printf '%b' "$2" | ./build/cminify html -)"
 	if [ "$?" != "0" ]; then
 		echo 'Crashed on:'
 		echo "$2"
