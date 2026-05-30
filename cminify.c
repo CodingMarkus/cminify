@@ -117,7 +117,7 @@ int strnicmp(const char *s1, const char *s2, size_t length)
 {
     int diff = 0;
     while (length--) {
-        if (diff = *s1 - *s2) {
+        if ((diff = *s1 - *s2)) {
             if ((unsigned char) (*s1 - 'A') <= 'Z' - 'A') {
                 diff += 'a' - 'A';
             }
