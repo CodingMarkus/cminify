@@ -18,7 +18,7 @@ static char *file_get_content(const char *filename)
             return NULL;
         }
     }
-    size_t buffer_size = BUFSIZ;
+    size_t buffer_size = BUFSIZ + 1;
     char *buffer = malloc(buffer_size);
     if (buffer == NULL) {
         fclose(fp);
@@ -27,11 +27,14 @@ static char *file_get_content(const char *filename)
     size_t read = 0;
     char *larger_buffer;
     do {
-        read += fread(&buffer[read], 1, BUFSIZ, fp);
+        read += fread(&buffer[read], 1, buffer_size - read - 1, fp);
         if (ferror(fp) != 0) {
             free(buffer);
             fclose(fp);
             return NULL;
+        }
+        if (feof(fp) != 0) {
+            break;
         }
         buffer_size += BUFSIZ;
         larger_buffer = realloc(buffer, buffer_size);
@@ -41,7 +44,8 @@ static char *file_get_content(const char *filename)
             return NULL;
         }
         buffer = larger_buffer;
-    } while (feof(fp) == 0);
+    } while (true);
+    buffer[read] = '\0';
     return buffer;
 }
 
