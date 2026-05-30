@@ -1254,10 +1254,11 @@ struct Minification minify_js(const char *js)
                     curly_blocks[curly_nesting_level - 1].type = CURLY_BLOCK_STRING_INTERPOLATION;
                     break;
                 }
-                if (i < quote_i + sizeof "</script" - 1 &&
-                    !strnicmp(&m.result[result_length - sizeof "</script" + 1], "</script",
-                        sizeof "</script" - 1))
-                {
+				if (result_length >= sizeof "</script" - 1 &&
+					i < quote_i + sizeof "</script" - 1 &&
+					!strnicmp(&m.result[result_length - sizeof "</script" + 1], "</script",
+						sizeof "</script" - 1))
+				{
                     strcpy(&m.result[result_length - sizeof "</script" + 1], "<\\/script");
                     result_length += 1;
                 }
