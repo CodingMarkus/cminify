@@ -2,7 +2,7 @@
 
 assert()
 {
-	result="$(echo -e "$2" | ./build/cminify json -)"
+	result="$(printf '%b' "$2" | ./build/cminify json -)"
 	if [ "$?" != "0" ]; then
 		echo Crashed on:
 		echo "$2"
