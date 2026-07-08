@@ -141,45 +141,45 @@ assert "$expected" "$input"
 
 input='import "./mod";let moduleGlobal=1;function demo(longName)'\
 '{return moduleGlobal+longName}'
-expected='import"./mod";let g0=1;function demo(a){return g0+a}'
+expected='import"./mod";let G0=1;function demo(a){return G0+a}'
 assert "$expected" "$input"
 
 input='import defaultName from "./mod";function demo(){return defaultName}'
-expected='import g0 from"./mod";function demo(){return g0}'
+expected='import G0 from"./mod";function demo(){return G0}'
 assert "$expected" "$input"
 
 input='import * as namespaceName from "./mod";function demo()'\
 '{return namespaceName.value}'
-expected='import*as g0 from"./mod";function demo(){return g0.value}'
+expected='import*as G0 from"./mod";function demo(){return G0.value}'
 assert "$expected" "$input"
 
 input='import {sourceName as localName} from "./mod";function demo()'\
 '{return localName}'
-expected='import{sourceName as g0}from"./mod";function demo(){return g0}'
+expected='import{sourceName as G0}from"./mod";function demo(){return G0}'
 assert "$expected" "$input"
 
 input='import {bareName} from "./mod";function demo(){return bareName}'
-expected='import{bareName as g0}from"./mod";function demo(){return g0}'
+expected='import{bareName as G0}from"./mod";function demo(){return G0}'
 assert "$expected" "$input"
 
 input='import defaultName,{sourceName as localName,bareName} from "./mod";'\
 'function demo(){return defaultName+localName+bareName}'
-expected='import g0,{sourceName as g1,bareName as g2}from"./mod";'\
-'function demo(){return g0+g1+g2}'
+expected='import G0,{sourceName as G1,bareName as G2}from"./mod";'\
+'function demo(){return G0+G1+G2}'
 assert "$expected" "$input"
 
 input='import "./mod";let g0=1;let moduleGlobal=2;'\
 'function demo(){return g0+moduleGlobal}'
-expected='import"./mod";let g0=1;let g1=2;function demo(){return g0+g1}'
+expected='import"./mod";let g0=1;let G0=2;function demo(){return g0+G0}'
 assert "$expected" "$input"
 
 input='import "./mod";const moduleGlobal=1;var secondGlobal=2;'\
 'function demo(){return moduleGlobal+secondGlobal}'
-expected='import"./mod";const g0=1;var g1=2;function demo(){return g0+g1}'
+expected='import"./mod";const G0=1;var G1=2;function demo(){return G0+G1}'
 assert "$expected" "$input"
 
 input='import "./mod";function moduleFunction(){return 1}moduleFunction()'
-expected='import"./mod";function g0(){return 1}g0()'
+expected='import"./mod";function G0(){return 1}G0()'
 assert "$expected" "$input"
 
 input='import "./mod";export function moduleFunction(){return 1}'\
@@ -190,8 +190,8 @@ assert "$expected" "$input"
 
 input='import "./mod";export const exportedGlobal=1;const localGlobal=2;'\
 'function demo(){return exportedGlobal+localGlobal}'
-expected='import"./mod";export const exportedGlobal=1;const g0=2;'\
-'function demo(){return exportedGlobal+g0}'
+expected='import"./mod";export const exportedGlobal=1;const G0=2;'\
+'function demo(){return exportedGlobal+G0}'
 assert "$expected" "$input"
 
 input='import "./mod";export {localGlobal};const localGlobal=2;'\
@@ -221,19 +221,19 @@ assert "$expected" "$input"
 input='import "./mod";const publicName=1;export {publicName};'\
 'const localGlobal=2;function demo(){return publicName+localGlobal}'
 expected='import"./mod";const publicName=1;export{publicName};'\
-'const g0=2;function demo(){return publicName+g0}'
+'const G0=2;function demo(){return publicName+G0}'
 assert "$expected" "$input"
 
 input='import "./mod";const localName=1;export {localName as publicName};'\
 'const otherName=2;function demo(){return localName+otherName}'
 expected='import"./mod";const localName=1;export{localName as publicName};'\
-'const g0=2;function demo(){return localName+g0}'
+'const G0=2;function demo(){return localName+G0}'
 assert "$expected" "$input"
 
 input='import "./mod";export {sourceName as publicName} from "./other";'\
 'const localGlobal=1;function demo(){return localGlobal}'
 expected='import"./mod";export{sourceName as publicName}from"./other";'\
-'const g0=1;function demo(){return g0}'
+'const G0=1;function demo(){return G0}'
 assert "$expected" "$input"
 
 input='import {sourceName as localName} from "./mod";export {localName};'\
@@ -244,19 +244,19 @@ assert "$expected" "$input"
 
 input='import "./mod";let {moduleGlobal}=source;'\
 'function demo(){return moduleGlobal}'
-expected='import"./mod";let{moduleGlobal:g0}=source;'\
-'function demo(){return g0}'
+expected='import"./mod";let{moduleGlobal:G0}=source;'\
+'function demo(){return G0}'
 assert "$expected" "$input"
 
 input='import "./mod";let moduleGlobal=1;'\
 'function demo(){return {moduleGlobal}}'
-expected='import"./mod";let g0=1;function demo(){return{g0:g0}}'
+expected='import"./mod";let G0=1;function demo(){return{G0:G0}}'
 assert "$expected" "$input"
 
 input='import "./mod";let moduleGlobal=1;'\
 'function demo(){return /moduleGlobal/.test(moduleGlobal)}'
-expected='import"./mod";let g0=1;'\
-'function demo(){return/moduleGlobal/.test(g0)}'
+expected='import"./mod";let G0=1;'\
+'function demo(){return/moduleGlobal/.test(G0)}'
 assert "$expected" "$input"
 
 input='import "./mod";let moduleGlobal=1;eval("moduleGlobal");'\
@@ -271,12 +271,12 @@ assert "$expected" "$input"
 
 input='import "./mod";let moduleGlobal=1;function demo(moduleGlobal)'\
 '{return moduleGlobal}'
-expected='import"./mod";let g0=1;function demo(a){return a}'
+expected='import"./mod";let G0=1;function demo(a){return a}'
 assert "$expected" "$input"
 
 input='import "./mod";let moduleGlobal=1;function demo(){let moduleGlobal=2;'\
 'return moduleGlobal}'
-expected='import"./mod";let g0=1;function demo(){let a=2;return a}'
+expected='import"./mod";let G0=1;function demo(){let a=2;return a}'
 assert "$expected" "$input"
 
 input='function demo(longName){return longName.value+longName["value"]}'
@@ -385,8 +385,8 @@ assert "$expected" "$input"
 
 input='import "./mod";let moduleGlobal=1;obj.eval("moduleGlobal");'\
 'function demo(){return moduleGlobal}'
-expected='import"./mod";let g0=1;obj.eval("moduleGlobal");'\
-'function demo(){return g0}'
+expected='import"./mod";let G0=1;obj.eval("moduleGlobal");'\
+'function demo(){return G0}'
 assert "$expected" "$input"
 
 input='function demo(longName){with(longName)return longName}'
@@ -449,6 +449,23 @@ input='function demo(a,longName){let b=longName;return a+b}'
 expected='function demo(a,c){let b=c;return a+b}'
 assert "$expected" "$input"
 
+input='function wrapper(_f,_g,_h){return _f+_g+_h}'
+expected='function wrapper(a,b,c){return a+b+c}'
+assert "$expected" "$input"
+
+input='function(module,exports,__webpack_require__)'\
+'{return module+exports+__webpack_require__}'
+expected='function(a,b,c){return a+b+c}'
+assert "$expected" "$input"
+
+input='function demo(){var objectValue={};var returnValue=1;return objectValue={},returnValue}'
+expected='function demo(){var a={};var b=1;return a={},b}'
+assert "$expected" "$input"
+
+input='function demo(a,longName){return 1}'
+expected='function demo(a,b){return 1}'
+assert "$expected" "$input"
+
 input='function one(longName){return longName}function two(otherName)'\
 '{return otherName}'
 expected='function one(a){return a}function two(a){return a}'
@@ -456,6 +473,30 @@ assert "$expected" "$input"
 
 input='let demo=function namedName(longName){return namedName(longName)}'
 expected='let demo=function a(b){return a(b)}'
+assert "$expected" "$input"
+
+input='function demo(resultBuffer,sampleValues,sampleSize)'\
+'{return resultBuffer!==undefined?resultBuffer:'\
+'new sampleValues.constructor(sampleSize)}'
+expected='function demo(a,b,c){return a!==undefined?a:new b.constructor(c)}'
+assert "$expected" "$input"
+
+input='function Interpolant(parameterPositions,sampleValues,sampleSize,'\
+'resultBuffer){this.parameterPositions=parameterPositions;'\
+'this._cachedIndex=0;this.resultBuffer=resultBuffer!==undefined?'\
+'resultBuffer:new sampleValues.constructor(sampleSize);'\
+'this.sampleValues=sampleValues;this.valueSize=sampleSize}'\
+'Object.assign(Interpolant.prototype,{copySampleValue_:'\
+'function copySampleValue_(index){var result=this.resultBuffer,'\
+'values=this.sampleValues,stride=this.valueSize,offset=index*stride;'\
+'for(var i=0;i!==stride;++i){result[i]=values[offset+i]}return result}})'
+expected='function Interpolant(a,b,c,d){this.parameterPositions=a;'\
+'this._cachedIndex=0;this.resultBuffer=d!==undefined?d:'\
+'new b.constructor(c);this.sampleValues=b;this.valueSize=c}'\
+'Object.assign(Interpolant.prototype,{copySampleValue_:'\
+'function copySampleValue_(index){var result=this.resultBuffer,'\
+'values=this.sampleValues,stride=this.valueSize,offset=index*stride;'\
+'for(var i=0;i!==stride;++i){result[i]=values[offset+i]}return result}})'
 assert "$expected" "$input"
 
 echo 'Passed all tests'
