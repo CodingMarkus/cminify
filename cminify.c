@@ -747,7 +747,7 @@ struct Minification minify_js(const char *js)
 
     size_t result_length = 0;
     size_t i = 0;
-    size_t last_open_curly_bracket_i, last_open_round_bracket_i;
+    size_t last_open_curly_bracket_i = 0, last_open_round_bracket_i = 0;
     const char *identifier_delimiters = "'\"`%<>+*/-=,(){}[]!~;|&^:? \t\r\n";
 
 	#define JS_SKIP_WHITESPACES_COMMENTS(js, ptr_i, out, ptr_out_length) \
@@ -1805,13 +1805,13 @@ static struct Minification minify_xmlhtml(const char *xmlhtml, bool is_xml)
     } script_type;
 
     size_t i = 0;
-    const char *current_tag;
+    const char *current_tag = NULL;
     size_t current_tag_length = 0;
-    bool is_closing_tag;
-    bool has_whitespace_before_tag;
+    bool is_closing_tag = false;
+    bool has_whitespace_before_tag = false;
     int (*tagncmp)(const char *, const char *, size_t) = (is_xml ? strncmp : strnicmp);
-    const char *value, *attribute;
-    size_t value_length, attribute_length;
+    const char *value = NULL, *attribute = NULL;
+    size_t value_length = 0, attribute_length = 0;
     size_t result_length = 0;
 
     while (true) {
