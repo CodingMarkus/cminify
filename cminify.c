@@ -34,9 +34,7 @@ static char *file_get_content(const char *filename)
             return NULL;
         }
         if (feof(fp) != 0) {
-            fclose(fp);
-            buffer[read] = '\0';
-            return buffer;
+            break;
         }
         buffer_size += BUFSIZ;
         larger_buffer = realloc(buffer, buffer_size);
@@ -47,6 +45,8 @@ static char *file_get_content(const char *filename)
         }
         buffer = larger_buffer;
     } while (true);
+    buffer[read] = '\0';
+    return buffer;
 }
 
 static bool is_whitespace(const char c)
@@ -353,16 +353,16 @@ struct Minification minify_css(const char *css)
             else if (syntax_block == SYNTAX_BLOCK_ATRULE) {
                 bool is_nestable_atrule =
                     (sizeof "@media" - 1 == atrule_length &&
-                    !strnicmp(atrule, "@media", atrule_length)) ||
+                     !strnicmp(atrule, "@media", atrule_length)) ||
 
                     (sizeof "@layer " - 1 == atrule_length &&
-                    !strnicmp(atrule, "@layer", atrule_length)) ||
+                     !strnicmp(atrule, "@layer", atrule_length)) ||
 
                     (sizeof "@container" - 1 == atrule_length &&
-                    !strnicmp(atrule, "@container", atrule_length)) ||
+                     !strnicmp(atrule, "@container", atrule_length)) ||
 
                     (sizeof "@keyframes" - 1 == atrule_length &&
-                    !strnicmp(atrule, "@keyframes", atrule_length));
+                     !strnicmp(atrule, "@keyframes", atrule_length));
 
                 syntax_block = is_nestable_atrule ? SYNTAX_BLOCK_RULE_START : SYNTAX_BLOCK_STYLE;
             }
@@ -421,7 +421,9 @@ struct Minification minify_css(const char *css)
             i += 1;
             continue;
         }
-        if (is_whitespace(css[i]) || (css[i] == '/' && css[i + 1] == '*')) {
+        if (is_whitespace(css[i]) ||
+            (css[i] == '/' && css[i + 1] == '*'))
+        {
             if (syntax_block == SYNTAX_BLOCK_ATRULE_ROUND_BRACKETS ||
                 syntax_block == SYNTAX_BLOCK_QRULE_ROUND_BRACKETS)
             {
@@ -572,7 +574,8 @@ struct Minification minify_json(const char *json)
                     size_t k;
                     for (k = i + 2; k <= i + 5; ++k) {
                         if (!(
-                            (json[k] >= '0' && json[k] <= '9') || (json[k] >= 'a' && json[k] <= 'f') ||
+                            (json[k] >= '0' && json[k] <= '9') ||
+                            (json[k] >= 'a' && json[k] <= 'f') ||
                             (json[k] >= 'A' && json[k] <= 'F')
                         )) {
                             invalid_unicode = true;
@@ -811,8 +814,10 @@ struct Minification minify_js(const char *js)
 
         // Next we handle keywords
 
-        if ((next_word_length == sizeof "switch" - 1 && !strncmp(&js[i], "switch", next_word_length)) ||
-            (next_word_length == sizeof "catch" - 1 && !strncmp(&js[i], "catch", next_word_length)))
+        if ((next_word_length == sizeof "switch" - 1 &&
+             !strncmp(&js[i], "switch", next_word_length)) ||
+            (next_word_length == sizeof "catch" - 1 &&
+             !strncmp(&js[i], "catch", next_word_length)))
         {
             memcpy(&m.result[result_length], &js[i], next_word_length);
             result_length += next_word_length;
@@ -865,8 +870,10 @@ struct Minification minify_js(const char *js)
             continue;
         }
         if (
-            (next_word_length == sizeof "try" - 1 && !strncmp(&js[i], "try", next_word_length)) ||
-            (next_word_length == sizeof "finally" - 1 && !strncmp(&js[i], "finally", next_word_length))
+            (next_word_length == sizeof "try" - 1 &&
+             !strncmp(&js[i], "try", next_word_length)) ||
+            (next_word_length == sizeof "finally" - 1 &&
+             !strncmp(&js[i], "finally", next_word_length))
         ) {
             memcpy(&m.result[result_length], &js[i], next_word_length);
             result_length += next_word_length;
@@ -957,8 +964,10 @@ struct Minification minify_js(const char *js)
             continue;
         }
         if (
-            (next_word_length == sizeof "if" - 1 && !strncmp(&js[i], "if", next_word_length)) ||
-            (next_word_length == sizeof "for" - 1 && !strncmp(&js[i], "for", next_word_length))
+            (next_word_length == sizeof "if" - 1 &&
+             !strncmp(&js[i], "if", next_word_length)) ||
+            (next_word_length == sizeof "for" - 1 &&
+             !strncmp(&js[i], "for", next_word_length))
         ) {
             memcpy(&m.result[result_length], &js[i], next_word_length);
             result_length += next_word_length;
@@ -1010,8 +1019,10 @@ struct Minification minify_js(const char *js)
         //    result_length += sizeof "void 0" - 1;
         //    continue;
         //}
-        if ((next_word_length == sizeof "true" - 1 && !strncmp(&js[i], "true", next_word_length)) ||
-            (next_word_length == sizeof "false" - 1 && !strncmp(&js[i], "false", next_word_length)))
+        if ((next_word_length == sizeof "true" - 1 &&
+             !strncmp(&js[i], "true", next_word_length)) ||
+            (next_word_length == sizeof "false" - 1 &&
+             !strncmp(&js[i], "false", next_word_length)))
         {
             if (result_length > 0 && m.result[result_length - 1] == ' ') {
                 result_length -= 1;
@@ -1183,8 +1194,10 @@ struct Minification minify_js(const char *js)
             continue;
         }
         if (js[i] == '/' && js[i + 1] != '/' && js[i + 1] != '*' &&
-            (result_length == 0 || strchr("^!&|([{><+-*%:?~,;=", m.result[result_length - 1]) != NULL ||
-            (m.result[result_length - 1] == ' ' && m.result[result_length - 2] == '<')))
+            (result_length == 0 ||
+             strchr("^!&|([{><+-*%:?~,;=", m.result[result_length - 1]) != NULL ||
+             (m.result[result_length - 1] == ' ' &&
+              m.result[result_length - 2] == '<')))
         {
             // This is a regex object.
 
@@ -1219,7 +1232,9 @@ struct Minification minify_js(const char *js)
             continue;
         }
         if (js[i] == '`' || js[i] == '"' || js[i] == '\'' ||
-            (js[i] == '}' && curly_blocks[curly_nesting_level - 1].type == CURLY_BLOCK_STRING_INTERPOLATION))
+            (js[i] == '}' &&
+             curly_blocks[curly_nesting_level - 1].type ==
+                 CURLY_BLOCK_STRING_INTERPOLATION))
         {
             if (js[i] == '}') {
                 curly_nesting_level -= 1;
@@ -1258,18 +1273,11 @@ struct Minification minify_js(const char *js)
                     curly_blocks[curly_nesting_level - 1].type = CURLY_BLOCK_STRING_INTERPOLATION;
                     break;
                 }
-
-                // When string merging produces the character sequence `</script`, we escape the slash
-                // to avoid breaking HTML documents when minifying inline JavaScript. Since string merging
-                // always shortens the input, the escaping may consume one additional byte without
-                // creating a memory overflow on `m.result` variable. The first if-condition ensures that
-                // `</script` sequences are not modified when they already occur in the unminified input.
-
-                if (i < quote_i + sizeof "</script" - 1 &&
-                    result_length >= sizeof "</script" - 1 &&
-                    !strnicmp(&m.result[result_length - sizeof "</script" + 1], "</script",
-                        sizeof "</script" - 1))
-                {
+				if (result_length >= sizeof "</script" - 1 &&
+					i < quote_i + sizeof "</script" - 1 &&
+					!strnicmp(&m.result[result_length - sizeof "</script" + 1], "</script",
+						sizeof "</script" - 1))
+				{
                     strcpy(&m.result[result_length - sizeof "</script" + 1], "<\\/script");
                     result_length += 1;
                 }
@@ -1297,7 +1305,10 @@ struct Minification minify_js(const char *js)
             }
             k += 1;
             skipped_all_comments = JS_SKIP_WHITESPACES_COMMENTS(js, &k, NULL, NULL);
-            if (!skipped_all_comments || (js[k] != js[quote_i] && (js[quote_i] != '}' || js[k] != '`'))) {
+            if (!skipped_all_comments ||
+                (js[k] != js[quote_i] &&
+                 (js[quote_i] != '}' || js[k] != '`')))
+            {
                 m.result[result_length++] = js[quote_i] == '}' ? '`' : js[quote_i];
                 continue;
             }
@@ -1412,8 +1423,11 @@ struct Minification minify_js(const char *js)
 
                 const char trim_space_around[] = ".()[]{},=*;?!:><-+'\"/|&`";
                 if ((strchr(trim_space_around, js[i]) == NULL &&
-                    strchr(trim_space_around, m.result[result_length - 1]) == NULL) ||
-                    (m.result[result_length - 1] == '<' && !strnicmp(&js[i], "/script", sizeof "/script" - 1)))
+                     strchr(trim_space_around,
+                         m.result[result_length - 1]) == NULL) ||
+                    (m.result[result_length - 1] == '<' &&
+                     !strnicmp(&js[i], "/script",
+                         sizeof "/script" - 1)))
                 {
                     m.result[result_length++] = ' ';
                 }
@@ -1505,7 +1519,9 @@ static void xmlhtml_correct_error_position(const char *encoded, const char *deco
             }
             if (encoded[encoded_i] == '&' && encoded[encoded_i + 1] == '#') {
                 encoded_i += 2;
-                if (encoded[encoded_i] == 'x' || (!is_xml && encoded[encoded_i] == 'X')) {
+                if (encoded[encoded_i] == 'x' ||
+                    (!is_xml && encoded[encoded_i] == 'X'))
+                {
                     encoded_i += 1;
                 }
                 while (encoded[encoded_i] != ';' && encoded[encoded_i] != '\0') {
@@ -1596,7 +1612,9 @@ static struct Minification xmlhtml_decode(const char *input, size_t length, bool
             if (input[i] == '&' && input[i + 1] == '#') {
                 uint_fast32_t codepoint = 0;
                 size_t k;
-                if (input[i + 2] == 'x' || (!is_xml && input[i + 2] == 'X')) {
+                if (input[i + 2] == 'x' ||
+                    (!is_xml && input[i + 2] == 'X'))
+                {
                     for (k = 3; input[i + k] != ';'; ++k) {
                         if (input[i + k] >= '0' && input[i + k] <= '9') {
                             codepoint = codepoint * 16 + (input[i + k] - '0');
@@ -2026,9 +2044,12 @@ static struct Minification minify_xmlhtml(const char *xmlhtml, bool is_xml)
             m.result[result_length++] = xmlhtml[i];
             current_tag_length = 1;
             while (
-                (xmlhtml[i + current_tag_length] >= 'a' && xmlhtml[i + current_tag_length] <= 'z') ||
-                (xmlhtml[i + current_tag_length] >= 'A' && xmlhtml[i + current_tag_length] <= 'Z') ||
-                (xmlhtml[i + current_tag_length] >= '0' && xmlhtml[i + current_tag_length] <= '9') ||
+                (xmlhtml[i + current_tag_length] >= 'a' &&
+                 xmlhtml[i + current_tag_length] <= 'z') ||
+                (xmlhtml[i + current_tag_length] >= 'A' &&
+                 xmlhtml[i + current_tag_length] <= 'Z') ||
+                (xmlhtml[i + current_tag_length] >= '0' &&
+                 xmlhtml[i + current_tag_length] <= '9') ||
                 xmlhtml[i + current_tag_length] == '-'
             ) {
                 current_tag_length += 1;
