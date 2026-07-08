@@ -261,22 +261,24 @@ Local Name Order
 Reason:
 
 - One-character names are shortest.
-- Once names are longer than one character, the `_` prefix avoids collisions with JavaScript reserved words like `if`, `in`, or `do`.
+- Once names are longer than one character, the `_` prefix makes
+  collisions with JavaScript reserved words impossible.
 
 
 Global Name Order
 -----------------
 
-- Globals always use a `g` prefix.
+- Globals always use a `G` prefix.
 - Planned order:
-  - `g0` to `g9`
-  - `ga` to `gz`
-  - `gA` to `gZ`
-  - `g00`, `g01`, and so on
+  - `G0` to `G9`
+  - `Ga` to `Gz`
+  - `GA` to `GZ`
+  - `G00`, `G01`, and so on
 
 Reason:
 
-- Global names must never accidentally become reserved words.
+- The `G` prefix makes collisions with JavaScript reserved words
+  impossible.
 - They stay visually distinct from local mangled names.
 
 
