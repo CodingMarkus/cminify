@@ -1,4 +1,5 @@
 COMPILER ?= cc
+CFLAGS ?= -O2 -g -Wall
 ifndef CROSS_TRIPLE
 	OUTPUT := cminify
 else ifeq '$(CROSS_TRIPLE)' 'x86_64-w64-mingw32'
@@ -12,7 +13,10 @@ build: build/$(OUTPUT)
 
 build/$(OUTPUT): cminify.c
 	mkdir -p build
-	$(COMPILER) -O2 -Wall -o build/$(OUTPUT) cminify.c
+	$(COMPILER) $(CFLAGS) -o build/$(OUTPUT) cminify.c
+
+.PHONY: strip
+strip: build/$(OUTPUT)
 	strip build/$(OUTPUT)
 
 .PHONY: test
