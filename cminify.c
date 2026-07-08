@@ -161,11 +161,11 @@ struct Minification minify_css(const char *css)
     size_t i = 0;
     size_t nesting_level = 0;
 
-    #define CSS_SKIP_WHITESPACES_COMMENTS(css, ptr_i, result, ptr_result_length) \
-        skip_whitespaces_comments(&m, css, ptr_i, result, ptr_result_length, COMMENT_VARIANT_CSS); \
-        if (m.error_position != 0) { \
-            goto error; \
-        }
+	#define CSS_SKIP_WHITESPACES_COMMENTS(css, ptr_i, out, ptr_out_length) \
+		skip_whitespaces_comments(&m, css, ptr_i, out, ptr_out_length, COMMENT_VARIANT_CSS); \
+		if (m.result == NULL) { \
+			goto error; \
+		}
 
     CSS_SKIP_WHITESPACES_COMMENTS(css, &i, m.result, &result_length);
     while (true) {
@@ -750,11 +750,11 @@ struct Minification minify_js(const char *js)
     size_t last_open_curly_bracket_i, last_open_round_bracket_i;
     const char *identifier_delimiters = "'\"`%<>+*/-=,(){}[]!~;|&^:? \t\r\n";
 
-    #define JS_SKIP_WHITESPACES_COMMENTS(js, ptr_i, result, ptr_result_length) \
-        skip_whitespaces_comments(&m, js, ptr_i, result, ptr_result_length, COMMENT_VARIANT_JS); \
-        if (m.error_position != 0) { \
-            goto error; \
-        }
+	#define JS_SKIP_WHITESPACES_COMMENTS(js, ptr_i, out, ptr_out_length) \
+		skip_whitespaces_comments(&m, js, ptr_i, out, ptr_out_length, COMMENT_VARIANT_JS); \
+		if (m.result == NULL) { \
+			goto error; \
+		}
 
     #define INCR_CURLY_NESTING_LEVEL \
         if (++curly_nesting_level > curly_blocks_capacity) { \
