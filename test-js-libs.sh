@@ -75,13 +75,13 @@ _test_file()
 
 	printf '%s (%s):\n   ' "$file" "$mode"
 	if [ "$mode" = "mangled" ]; then
-		build/cminify js --benchmark "$file" \
-			--mangle-js-identifiers || return 1
 		build/cminify js "$file" --mangle-js-identifiers | node -c ||
 			return 1
+		build/cminify js --benchmark "$file" \
+			--mangle-js-identifiers || return 1
 	else
-		build/cminify js --benchmark "$file" || return 1
 		build/cminify js "$file" | node -c || return 1
+		build/cminify js --benchmark "$file" || return 1
 	fi
 }
 

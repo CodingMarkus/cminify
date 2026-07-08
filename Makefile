@@ -25,6 +25,7 @@ test: build
 	./test-css.sh
 	./test-html.sh
 	./test-js.sh
+	./test-js-mangling.sh
 	./test-js-libs.sh
 
 .PHONY: check
