@@ -161,11 +161,11 @@ struct Minification minify_css(const char *css)
     size_t i = 0;
     size_t nesting_level = 0;
 
-    #define CSS_SKIP_WHITESPACES_COMMENTS(css, ptr_i, result, ptr_result_length) \
-        skip_whitespaces_comments(&m, css, ptr_i, result, ptr_result_length, COMMENT_VARIANT_CSS); \
-        if (m.error_position != 0) { \
-            goto error; \
-        }
+	#define CSS_SKIP_WHITESPACES_COMMENTS(css, ptr_i, out, ptr_out_length) \
+		skip_whitespaces_comments(&m, css, ptr_i, out, ptr_out_length, COMMENT_VARIANT_CSS); \
+		if (m.result == NULL) { \
+			goto error; \
+		}
 
     CSS_SKIP_WHITESPACES_COMMENTS(css, &i, m.result, &result_length);
     while (true) {
@@ -352,17 +352,17 @@ struct Minification minify_css(const char *css)
             }
             else if (syntax_block == SYNTAX_BLOCK_ATRULE) {
                 bool is_nestable_atrule =
-                    sizeof "@media" - 1 == atrule_length &&
-                    !strnicmp(atrule, "@media", atrule_length) ||
+                    (sizeof "@media" - 1 == atrule_length &&
+                     !strnicmp(atrule, "@media", atrule_length)) ||
 
-                    sizeof "@layer " - 1 == atrule_length &&
-                    !strnicmp(atrule, "@layer", atrule_length) ||
+                    (sizeof "@layer " - 1 == atrule_length &&
+                     !strnicmp(atrule, "@layer", atrule_length)) ||
 
-                    sizeof "@container" - 1 == atrule_length &&
-                    !strnicmp(atrule, "@container", atrule_length) ||
+                    (sizeof "@container" - 1 == atrule_length &&
+                     !strnicmp(atrule, "@container", atrule_length)) ||
 
-                    sizeof "@keyframes" - 1 == atrule_length &&
-                    !strnicmp(atrule, "@keyframes", atrule_length);
+                    (sizeof "@keyframes" - 1 == atrule_length &&
+                     !strnicmp(atrule, "@keyframes", atrule_length));
 
                 syntax_block = is_nestable_atrule ? SYNTAX_BLOCK_RULE_START : SYNTAX_BLOCK_STYLE;
             }
@@ -421,7 +421,9 @@ struct Minification minify_css(const char *css)
             i += 1;
             continue;
         }
-        if (is_whitespace(css[i]) || css[i] == '/' && css[i + 1] == '*') {
+        if (is_whitespace(css[i]) ||
+            (css[i] == '/' && css[i + 1] == '*'))
+        {
             if (syntax_block == SYNTAX_BLOCK_ATRULE_ROUND_BRACKETS ||
                 syntax_block == SYNTAX_BLOCK_QRULE_ROUND_BRACKETS)
             {
@@ -572,8 +574,9 @@ struct Minification minify_json(const char *json)
                     size_t k;
                     for (k = i + 2; k <= i + 5; ++k) {
                         if (!(
-                            (json[k] >= '0' && json[k] <= '9') || json[k] >= 'a' && json[k] <= 'f' ||
-                            json[k] >= 'A' && json[k] <= 'F'
+                            (json[k] >= '0' && json[k] <= '9') ||
+                            (json[k] >= 'a' && json[k] <= 'f') ||
+                            (json[k] >= 'A' && json[k] <= 'F')
                         )) {
                             invalid_unicode = true;
                         }
@@ -3329,14 +3332,14 @@ struct Minification minify_js(const char *js)
 
     size_t result_length = 0;
     size_t i = 0;
-    size_t last_open_curly_bracket_i, last_open_round_bracket_i;
+    size_t last_open_curly_bracket_i = 0, last_open_round_bracket_i = 0;
     const char *identifier_delimiters = "'\"`%<>+*/-=,(){}[]!~;|&^:? \t\r\n";
 
-    #define JS_SKIP_WHITESPACES_COMMENTS(js, ptr_i, result, ptr_result_length) \
-        skip_whitespaces_comments(&m, js, ptr_i, result, ptr_result_length, COMMENT_VARIANT_JS); \
-        if (m.error_position != 0) { \
-            goto error; \
-        }
+	#define JS_SKIP_WHITESPACES_COMMENTS(js, ptr_i, out, ptr_out_length) \
+		skip_whitespaces_comments(&m, js, ptr_i, out, ptr_out_length, COMMENT_VARIANT_JS); \
+		if (m.result == NULL) { \
+			goto error; \
+		}
 
     #define INCR_CURLY_NESTING_LEVEL \
         if (++curly_nesting_level > curly_blocks_capacity) { \
@@ -3393,8 +3396,10 @@ struct Minification minify_js(const char *js)
 
         // Next we handle keywords
 
-        if (next_word_length == sizeof "switch" - 1 && !strncmp(&js[i], "switch", next_word_length) ||
-            next_word_length == sizeof "catch" - 1 && !strncmp(&js[i], "catch", next_word_length))
+        if ((next_word_length == sizeof "switch" - 1 &&
+             !strncmp(&js[i], "switch", next_word_length)) ||
+            (next_word_length == sizeof "catch" - 1 &&
+             !strncmp(&js[i], "catch", next_word_length)))
         {
             memcpy(&m.result[result_length], &js[i], next_word_length);
             result_length += next_word_length;
@@ -3447,8 +3452,10 @@ struct Minification minify_js(const char *js)
             continue;
         }
         if (
-            next_word_length == sizeof "try" - 1 && !strncmp(&js[i], "try", next_word_length) ||
-            next_word_length == sizeof "finally" - 1 && !strncmp(&js[i], "finally", next_word_length)
+            (next_word_length == sizeof "try" - 1 &&
+             !strncmp(&js[i], "try", next_word_length)) ||
+            (next_word_length == sizeof "finally" - 1 &&
+             !strncmp(&js[i], "finally", next_word_length))
         ) {
             memcpy(&m.result[result_length], &js[i], next_word_length);
             result_length += next_word_length;
@@ -3539,8 +3546,10 @@ struct Minification minify_js(const char *js)
             continue;
         }
         if (
-            next_word_length == sizeof "if" - 1 && !strncmp(&js[i], "if", next_word_length) ||
-            next_word_length == sizeof "for" - 1 && !strncmp(&js[i], "for", next_word_length)
+            (next_word_length == sizeof "if" - 1 &&
+             !strncmp(&js[i], "if", next_word_length)) ||
+            (next_word_length == sizeof "for" - 1 &&
+             !strncmp(&js[i], "for", next_word_length))
         ) {
             memcpy(&m.result[result_length], &js[i], next_word_length);
             result_length += next_word_length;
@@ -3592,8 +3601,10 @@ struct Minification minify_js(const char *js)
         //    result_length += sizeof "void 0" - 1;
         //    continue;
         //}
-        if (next_word_length == sizeof "true" - 1 && !strncmp(&js[i], "true", next_word_length) ||
-            next_word_length == sizeof "false" - 1 && !strncmp(&js[i], "false", next_word_length))
+        if ((next_word_length == sizeof "true" - 1 &&
+             !strncmp(&js[i], "true", next_word_length)) ||
+            (next_word_length == sizeof "false" - 1 &&
+             !strncmp(&js[i], "false", next_word_length)))
         {
             if (result_length > 0 && m.result[result_length - 1] == ' ') {
                 result_length -= 1;
@@ -3765,8 +3776,10 @@ struct Minification minify_js(const char *js)
             continue;
         }
         if (js[i] == '/' && js[i + 1] != '/' && js[i + 1] != '*' &&
-            (result_length == 0 || strchr("^!&|([{><+-*%:?~,;=", m.result[result_length - 1]) != NULL ||
-            m.result[result_length - 1] == ' ' && m.result[result_length - 2] == '<'))
+            (result_length == 0 ||
+             strchr("^!&|([{><+-*%:?~,;=", m.result[result_length - 1]) != NULL ||
+             (m.result[result_length - 1] == ' ' &&
+              m.result[result_length - 2] == '<')))
         {
             // This is a regex object.
 
@@ -3801,7 +3814,9 @@ struct Minification minify_js(const char *js)
             continue;
         }
         if (js[i] == '`' || js[i] == '"' || js[i] == '\'' ||
-            js[i] == '}' && curly_blocks[curly_nesting_level - 1].type == CURLY_BLOCK_STRING_INTERPOLATION)
+            (js[i] == '}' &&
+             curly_blocks[curly_nesting_level - 1].type ==
+                 CURLY_BLOCK_STRING_INTERPOLATION))
         {
             if (js[i] == '}') {
                 curly_nesting_level -= 1;
@@ -3872,7 +3887,10 @@ struct Minification minify_js(const char *js)
             }
             k += 1;
             skipped_all_comments = JS_SKIP_WHITESPACES_COMMENTS(js, &k, NULL, NULL);
-            if (!skipped_all_comments || js[k] != js[quote_i] && (js[quote_i] != '}' || js[k] != '`')) {
+            if (!skipped_all_comments ||
+                (js[k] != js[quote_i] &&
+                 (js[quote_i] != '}' || js[k] != '`')))
+            {
                 m.result[result_length++] = js[quote_i] == '}' ? '`' : js[quote_i];
                 continue;
             }
@@ -3900,8 +3918,8 @@ struct Minification minify_js(const char *js)
             continue;
         }
         if (is_whitespace(js[i]) ||
-            js[i] == '/' && js[i + 1] == '*' ||
-            js[i] == '/' && js[i + 1] == '/')
+            (js[i] == '/' && js[i + 1] == '*') ||
+            (js[i] == '/' && js[i + 1] == '/'))
         {
             size_t whitespace_comment_i = i;
             JS_SKIP_WHITESPACES_COMMENTS(js, &i, m.result, &result_length);
@@ -3912,8 +3930,8 @@ struct Minification minify_js(const char *js)
                 continue;
             }
 
-            if (js[i] == '+' && m.result[result_length - 1] == '+' ||
-                js[i] == '-' && m.result[result_length - 1] == '-')
+            if ((js[i] == '+' && m.result[result_length - 1] == '+') ||
+                (js[i] == '-' && m.result[result_length - 1] == '-'))
             {
                 m.result[result_length++] = ' ';
                 continue;
@@ -3986,9 +4004,12 @@ struct Minification minify_js(const char *js)
                 // to handle the issue.
 
                 const char trim_space_around[] = ".()[]{},=*;?!:><-+'\"/|&`";
-                if (strchr(trim_space_around, js[i]) == NULL &&
-                    strchr(trim_space_around, m.result[result_length - 1]) == NULL ||
-                    m.result[result_length - 1] == '<' && !strnicmp(&js[i], "/script", sizeof "/script" - 1))
+                if ((strchr(trim_space_around, js[i]) == NULL &&
+                     strchr(trim_space_around,
+                         m.result[result_length - 1]) == NULL) ||
+                    (m.result[result_length - 1] == '<' &&
+                     !strnicmp(&js[i], "/script",
+                         sizeof "/script" - 1)))
                 {
                     m.result[result_length++] = ' ';
                 }
@@ -4080,7 +4101,9 @@ static void xmlhtml_correct_error_position(const char *encoded, const char *deco
             }
             if (encoded[encoded_i] == '&' && encoded[encoded_i + 1] == '#') {
                 encoded_i += 2;
-                if (encoded[encoded_i] == 'x' || !is_xml && encoded[encoded_i] == 'X') {
+                if (encoded[encoded_i] == 'x' ||
+                    (!is_xml && encoded[encoded_i] == 'X'))
+                {
                     encoded_i += 1;
                 }
                 while (encoded[encoded_i] != ';' && encoded[encoded_i] != '\0') {
@@ -4171,7 +4194,9 @@ static struct Minification xmlhtml_decode(const char *input, size_t length, bool
             if (input[i] == '&' && input[i + 1] == '#') {
                 uint_fast32_t codepoint = 0;
                 size_t k;
-                if (input[i + 2] == 'x' || !is_xml && input[i + 2] == 'X') {
+                if (input[i + 2] == 'x' ||
+                    (!is_xml && input[i + 2] == 'X'))
+                {
                     for (k = 3; input[i + k] != ';'; ++k) {
                         if (input[i + k] >= '0' && input[i + k] <= '9') {
                             codepoint = codepoint * 16 + (input[i + k] - '0');
@@ -4380,13 +4405,13 @@ static struct Minification minify_xmlhtml(const char *xmlhtml, bool is_xml)
     } script_type;
 
     size_t i = 0;
-    const char *current_tag;
+    const char *current_tag = NULL;
     size_t current_tag_length = 0;
-    bool is_closing_tag;
-    bool has_whitespace_before_tag;
+    bool is_closing_tag = false;
+    bool has_whitespace_before_tag = false;
     int (*tagncmp)(const char *, const char *, size_t) = (is_xml ? strncmp : strnicmp);
-    const char *value, *attribute;
-    size_t value_length, attribute_length;
+    const char *value = NULL, *attribute = NULL;
+    size_t value_length = 0, attribute_length = 0;
     size_t result_length = 0;
 
     while (true) {
@@ -4588,8 +4613,8 @@ static struct Minification minify_xmlhtml(const char *xmlhtml, bool is_xml)
                 i += 1;
             }
             if (!(
-                xmlhtml[i] >= 'a' && xmlhtml[i] <= 'z' ||
-                xmlhtml[i] >= 'A' && xmlhtml[i] <= 'Z' ||
+                (xmlhtml[i] >= 'a' && xmlhtml[i] <= 'z') ||
+                (xmlhtml[i] >= 'A' && xmlhtml[i] <= 'Z') ||
                 xmlhtml[i] == ':' || xmlhtml[i] == '_' ||
                 xmlhtml[i] == '?'
             )) {
@@ -4601,9 +4626,12 @@ static struct Minification minify_xmlhtml(const char *xmlhtml, bool is_xml)
             m.result[result_length++] = xmlhtml[i];
             current_tag_length = 1;
             while (
-                xmlhtml[i + current_tag_length] >= 'a' && xmlhtml[i + current_tag_length] <= 'z' ||
-                xmlhtml[i + current_tag_length] >= 'A' && xmlhtml[i + current_tag_length] <= 'Z' ||
-                xmlhtml[i + current_tag_length] >= '0' && xmlhtml[i + current_tag_length] <= '9' ||
+                (xmlhtml[i + current_tag_length] >= 'a' &&
+                 xmlhtml[i + current_tag_length] <= 'z') ||
+                (xmlhtml[i + current_tag_length] >= 'A' &&
+                 xmlhtml[i + current_tag_length] <= 'Z') ||
+                (xmlhtml[i + current_tag_length] >= '0' &&
+                 xmlhtml[i + current_tag_length] <= '9') ||
                 xmlhtml[i + current_tag_length] == '-'
             ) {
                 current_tag_length += 1;

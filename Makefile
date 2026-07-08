@@ -12,7 +12,7 @@ build: build/$(OUTPUT)
 
 build/$(OUTPUT): cminify.c
 	mkdir -p build
-	$(COMPILER) -O2 -Wall -Wno-parentheses -Wno-maybe-uninitialized -o build/$(OUTPUT) cminify.c
+	$(COMPILER) -O2 -Wall -o build/$(OUTPUT) cminify.c
 	strip build/$(OUTPUT)
 
 .PHONY: test
@@ -34,8 +34,8 @@ clean:
 .PHONY: crossbuild
 crossbuild:
 	docker run -e CROSS_TRIPLE=x86_64-w64-mingw32 \
-		-v $$(pwd):/workdir -u $$(id -u):$$(id -g) multiarch/crossbuild make && \
+		-v $$(pwd):/workdir:z -u $$(id -u):$$(id -g) multiarch/crossbuild make && \
 	docker run -e CROSS_TRIPLE=x86_64-apple-darwin \
-		-v $$(pwd):/workdir -u $$(id -u):$$(id -g) multiarch/crossbuild make
+	-v $$(pwd):/workdir:z -u $$(id -u):$$(id -g) multiarch/crossbuild make
 	docker run -e CROSS_TRIPLE=x86_64-linux-gnu \
-		-v $$(pwd):/workdir -u $$(id -u):$$(id -g) multiarch/crossbuild make
+		-v $$(pwd):/workdir:z -u $$(id -u):$$(id -g) multiarch/crossbuild make

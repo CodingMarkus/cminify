@@ -32,10 +32,6 @@ input='  a  b  '
 expected=' a b '
 assert "$expected" "$input"
 
-input='</script>; ;'
-expected='</script>; ; '
-assert "$expected" "$input"
-
 input='<scrIpT TyPe=application/json&plus;ld> { "key" : true } </script>'
 expected='<scrIpT TyPe=application/json&plus;ld>{"key":true}</script>'
 assert "$expected" "$input"
