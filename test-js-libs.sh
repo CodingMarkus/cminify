@@ -68,12 +68,28 @@ _download()
 	) || return 1
 }
 
+_test_file()
+{
+	file="$1"
+	mode="$2"
+
+	printf '%s (%s):\n   ' "$file" "$mode"
+	if [ "$mode" = "mangled" ]; then
+		build/cminify js --benchmark "$file" \
+			--mangle-js-identifiers || return 1
+		build/cminify js "$file" --mangle-js-identifiers | node -c ||
+			return 1
+	else
+		build/cminify js --benchmark "$file" || return 1
+		build/cminify js "$file" | node -c || return 1
+	fi
+}
+
 _main()
 {
 	for file in test-js-libs/*.js; do
-		printf '%s:\n   ' "$file"
-		build/cminify js --benchmark "$file" || return
-		build/cminify js "$file" | node -c || return
+		_test_file "$file" "plain" || return 1
+		_test_file "$file" "mangled" || return 1
 	done
 }
 
