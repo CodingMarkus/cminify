@@ -1,4 +1,5 @@
 COMPILER ?= cc
+CC ?= $(COMPILER)
 CFLAGS ?= -O2 -g -Wall -Wextra -Wno-unused-parameter
 ifndef CROSS_TRIPLE
 	OUTPUT := cminify
@@ -13,7 +14,7 @@ build: build/$(OUTPUT)
 
 build/$(OUTPUT): cminify.c
 	mkdir -p build
-	$(COMPILER) $(CFLAGS) -o build/$(OUTPUT) cminify.c
+	$(CC) $(CFLAGS) -o build/$(OUTPUT) cminify.c
 
 .PHONY: strip
 strip: build/$(OUTPUT)
