@@ -1,5 +1,5 @@
 COMPILER ?= cc
-CFLAGS ?= -O2 -g -Wall
+CFLAGS ?= -O2 -g -Wall -Wextra -Wno-unused-parameter
 ifndef CROSS_TRIPLE
 	OUTPUT := cminify
 else ifeq '$(CROSS_TRIPLE)' 'x86_64-w64-mingw32'
