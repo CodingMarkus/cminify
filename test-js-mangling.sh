@@ -36,6 +36,42 @@ assert_without_mangling()
 	fi
 }
 
+assert_html()
+{
+	result="$(printf '%b' "$2" | ./build/cminify html - --mangle-js-identifiers)"
+	if [ "$?" != "0" ]; then
+		echo Crashed on:
+		echo "$2"
+		echo Standard output:
+		echo "$result"
+		exit 1
+	elif [ "$1" != "$result" ]; then
+		echo 'Error: expected:'
+		echo "$1"
+		echo got:
+		echo "$result"
+		exit 1
+	fi
+}
+
+assert_xml()
+{
+	result="$(printf '%b' "$2" | ./build/cminify xml - --mangle-js-identifiers)"
+	if [ "$?" != "0" ]; then
+		echo Crashed on:
+		echo "$2"
+		echo Standard output:
+		echo "$result"
+		exit 1
+	elif [ "$1" != "$result" ]; then
+		echo 'Error: expected:'
+		echo "$1"
+		echo got:
+		echo "$result"
+		exit 1
+	fi
+}
+
 input='function demo(longName){return longName}'
 expected='function demo(longName){return longName}'
 assert_without_mangling "$expected" "$input"
@@ -498,5 +534,21 @@ expected='function Interpolant(a,b,c,d){this.parameterPositions=a;'\
 'values=this.sampleValues,stride=this.valueSize,offset=index*stride;'\
 'for(var i=0;i!==stride;++i){result[i]=values[offset+i]}return result}})'
 assert "$expected" "$input"
+
+input='<script>function demo(longName){let otherName=longName+1;'\
+'return otherName}</script>'
+expected='<script>function demo(a){let b=a+1;return b}</script>'
+assert_html "$expected" "$input"
+
+input='<script type=module>const moduleGlobal=1;function demo(longName)'\
+'{return moduleGlobal+longName}</script>'
+expected='<script type=module>const G0=1;function demo(a){return G0+a}'\
+'</script>'
+assert_html "$expected" "$input"
+
+input='<script><![CDATA[ function demo(longName){let otherName=longName+1;'\
+'return otherName} ]]></script>'
+expected='<script>function demo(a){let b=a+1;return b}</script>'
+assert_xml "$expected" "$input"
 
 echo 'Passed all tests'

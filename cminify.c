@@ -63,6 +63,8 @@ struct Minification
 
 enum CommentVariant {COMMENT_VARIANT_CSS, COMMENT_VARIANT_JS};
 
+static bool option_mangle_js_identifiers = false;
+
 static bool skip_whitespaces_comments(struct Minification *m, const char *input, size_t *i, char *min,
     size_t *min_length, enum CommentVariant comment_variant)
 {
@@ -3722,7 +3724,8 @@ static bool js_mangle_arrow(const char *js, size_t params_start,
         *body_end, body_start, body_start, program, state);
 }
 
-static struct Minification mangle_js_identifiers(const char *js)
+static struct Minification mangle_js_identifiers(const char *js,
+    bool force_module)
 {
     struct Minification m = {.result = NULL};
     struct JsMangleState state = {0};
@@ -3765,7 +3768,7 @@ static struct Minification mangle_js_identifiers(const char *js)
         return m;
     }
 
-    if (js_mangle_is_module(js, &program)) {
+    if (force_module || js_mangle_is_module(js, &program)) {
         if (!js_mangle_collect_exported_declarations(js, length,
             &exported_bindings, &exported_bindings_length,
             &exported_bindings_capacity))
@@ -4763,6 +4766,50 @@ error:
     return m;
 }
 
+static struct Minification minify_js_with_options(const char *js)
+{
+    struct Minification m = minify_js(js);
+
+    if (m.result != NULL && option_mangle_js_identifiers) {
+        struct Minification mangled = mangle_js_identifiers(m.result, false);
+        free(m.result);
+        m = mangled;
+    }
+
+    return m;
+}
+
+static struct Minification minify_js_module_with_options(const char *js)
+{
+    struct Minification m = minify_js(js);
+
+    if (m.result != NULL && option_mangle_js_identifiers) {
+        const char *module_marker = "import\"\";";
+        size_t module_marker_length = strlen(module_marker);
+        size_t result_length = strlen(m.result);
+        char *module_js = malloc(module_marker_length + result_length + 1);
+        if (module_js == NULL) {
+            free(m.result);
+            m.result = NULL;
+            snprintf(m.error, sizeof m.error, "Cannot allocate memory\n");
+            return m;
+        }
+        memcpy(module_js, module_marker, module_marker_length);
+        memcpy(&module_js[module_marker_length], m.result, result_length + 1);
+
+        struct Minification mangled = mangle_js_identifiers(module_js, false);
+        free(module_js);
+        free(m.result);
+        m = mangled;
+        if (m.result != NULL) {
+            memmove(m.result, &m.result[module_marker_length],
+                strlen(&m.result[module_marker_length]) + 1);
+        }
+    }
+
+    return m;
+}
+
 static void xmlhtml_correct_error_position(const char *encoded, const char *decoded, size_t *error_position,
     bool is_xml)
 {
@@ -5122,6 +5169,7 @@ static struct Minification minify_xmlhtml(const char *xmlhtml, bool is_xml)
 
     enum {
         SCRIPT_TYPE_JAVASCRIPT,
+        SCRIPT_TYPE_MODULE,
         SCRIPT_TYPE_JSON,
         SCRIPT_TYPE_OTHER
     } script_type;
@@ -5148,7 +5196,10 @@ static struct Minification minify_xmlhtml(const char *xmlhtml, bool is_xml)
         {
             tag_content_delimiter = "</script";
             if (script_type == SCRIPT_TYPE_JAVASCRIPT) {
-                tag_content_minify_callback = minify_js;
+                tag_content_minify_callback = minify_js_with_options;
+            }
+            else if (script_type == SCRIPT_TYPE_MODULE) {
+                tag_content_minify_callback = minify_js_module_with_options;
             }
             else if (script_type == SCRIPT_TYPE_JSON) {
                 tag_content_minify_callback = minify_json;
@@ -5591,7 +5642,7 @@ static struct Minification minify_xmlhtml(const char *xmlhtml, bool is_xml)
                     script_type = SCRIPT_TYPE_JSON;
                 }
                 else if (!strcmp(decoded_value.result, "module")) {
-                    script_type = SCRIPT_TYPE_JAVASCRIPT;
+                    script_type = SCRIPT_TYPE_MODULE;
                 }
                 else if (!strcmp(decoded_value.result, "text/javascript")) {
                     script_type = SCRIPT_TYPE_JAVASCRIPT;
@@ -5665,7 +5716,6 @@ struct LineColumn position_to_line_column(const char *text, size_t position)
 int main(int argc, const char *argv[])
 {
     bool benchmark = false;
-    bool mangle_js = false;
     bool print_usage = false;
     const char *format_str = NULL;
     const char *input_filename = NULL;
@@ -5676,7 +5726,7 @@ int main(int argc, const char *argv[])
             benchmark = true;
         }
         else if (!strcmp(argv[i], "--mangle-js-identifiers")) {
-            mangle_js = true;
+            option_mangle_js_identifiers = true;
         }
         else if (format_str == NULL) {
             format_str = argv[i];
@@ -5728,12 +5778,7 @@ int main(int argc, const char *argv[])
     struct Minification m;
     switch (format) {
     case FORMAT_JS:
-        m = minify_js(input);
-        if (m.result != NULL && mangle_js) {
-            struct Minification mangled = mangle_js_identifiers(m.result);
-            free(m.result);
-            m = mangled;
-        }
+        m = minify_js_with_options(input);
         break;
     case FORMAT_CSS:
         m = minify_css(input);
