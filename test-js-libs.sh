@@ -70,10 +70,25 @@ _download()
 
 _main()
 {
+	tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/cminify-js-libs.XXXXXX")" || return 1
+	trap 'rm -rf "$tmp_dir"' EXIT HUP INT TERM
+
 	for file in test-js-libs/*.js; do
+		output_file="$tmp_dir/$(basename "$file").min.js"
+		input_size="$(wc -c < "$file" | tr -d ' ')" || return 1
 		printf '%s:\n   ' "$file"
-		build/cminify js --benchmark "$file" || return
-		build/cminify js "$file" | node -c || return
+		build/cminify js "$file" > "$output_file" || return
+		output_size="$(wc -c < "$output_file" | tr -d ' ')" || return 1
+		if [ "$input_size" = "0" ]; then
+			reduction=0.0
+		else
+			reduction="$(
+				awk "BEGIN { print 100.0 - 100.0 * $output_size / $input_size }"
+			)" || return 1
+		fi
+		printf 'Reduced the size by %.1f%% from %s to %s bytes\n' \
+			"$reduction" "$input_size" "$output_size"
+		node -c "$output_file" || return
 	done
 }
 
