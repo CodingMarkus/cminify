@@ -853,13 +853,13 @@ static void js_mangle_previous_next(const char *js, size_t start, size_t end,
 static bool js_identifier_start(char c)
 {
     return c == '_' || c == '$' ||
-        c >= 'a' && c <= 'z' ||
-        c >= 'A' && c <= 'Z';
+        (c >= 'a' && c <= 'z') ||
+        (c >= 'A' && c <= 'Z');
 }
 
 static bool js_identifier_part(char c)
 {
-    return js_identifier_start(c) || c >= '0' && c <= '9';
+    return js_identifier_start(c) || (c >= '0' && c <= '9');
 }
 
 static bool js_word_equals(const char *js, size_t i, const char *word)
@@ -1840,10 +1840,10 @@ static bool js_mangle_collect_pattern_bindings(const char *js, size_t start,
             bool binding =
                 containers[containers_length - 1] == '[' &&
                 (previous == '[' || previous == ',' || rest_element);
-            binding = binding ||
+            binding = binding || (
                 containers[containers_length - 1] == '{' &&
                 (previous == ':' || previous == '{' || previous == ',' ||
-                rest_element);
+                rest_element));
             if (binding && next != ':') {
                 if (!js_mangle_add_binding(bindings, bindings_length,
                     bindings_capacity, &js[word_start], i - word_start))
