@@ -1801,10 +1801,276 @@ xml_encode(const char *input, const size_t input_length)
     }
 }
 
+static bool ensure_result_capacity(char **result, size_t *capacity, size_t needed_length)
+{
+    if (needed_length + 1 <= *capacity) {
+        return true;
+    }
+    size_t new_capacity = *capacity;
+    while (needed_length + 1 > new_capacity) {
+        new_capacity *= 2;
+    }
+    char *result_realloc = realloc(*result, new_capacity);
+    if (result_realloc == NULL) {
+        return false;
+    }
+    *result = result_realloc;
+    *capacity = new_capacity;
+    return true;
+}
+
+static bool xmlhtml_is_event_handler_attribute(const char *attribute, size_t attribute_length, bool is_xml)
+{
+    if (is_xml) {
+        return false;
+    }
+    const char *event_handler_attributes[] = {
+        "onabort",
+        "onafterprint",
+        "onauxclick",
+        "onbeforematch",
+        "onbeforeprint",
+        "onbeforetoggle",
+        "onbeforeunload",
+        "onblur",
+        "oncancel",
+        "oncanplay",
+        "oncanplaythrough",
+        "onchange",
+        "onclick",
+        "onclose",
+        "oncommand",
+        "oncontextlost",
+        "oncontextmenu",
+        "oncontextrestored",
+        "oncopy",
+        "oncuechange",
+        "oncut",
+        "ondblclick",
+        "ondrag",
+        "ondragend",
+        "ondragenter",
+        "ondragleave",
+        "ondragover",
+        "ondragstart",
+        "ondrop",
+        "ondurationchange",
+        "onemptied",
+        "onended",
+        "onerror",
+        "onfocus",
+        "onformdata",
+        "onhashchange",
+        "oninput",
+        "oninvalid",
+        "onkeydown",
+        "onkeypress",
+        "onkeyup",
+        "onlanguagechange",
+        "onload",
+        "onloadeddata",
+        "onloadedmetadata",
+        "onloadstart",
+        "onmessage",
+        "onmessageerror",
+        "onmousedown",
+        "onmouseenter",
+        "onmouseleave",
+        "onmousemove",
+        "onmouseout",
+        "onmouseover",
+        "onmouseup",
+        "onoffline",
+        "ononline",
+        "onpagehide",
+        "onpageshow",
+        "onpaste",
+        "onpause",
+        "onplay",
+        "onplaying",
+        "onpopstate",
+        "onprogress",
+        "onratechange",
+        "onrejectionhandled",
+        "onreset",
+        "onresize",
+        "onscroll",
+        "onscrollend",
+        "onsecuritypolicyviolation",
+        "onseeked",
+        "onseeking",
+        "onselect",
+        "onslotchange",
+        "onstalled",
+        "onstorage",
+        "onsubmit",
+        "onsuspend",
+        "ontimeupdate",
+        "ontoggle",
+        "onunhandledrejection",
+        "onunload",
+        "onvolumechange",
+        "onwaiting",
+        "onwheel",
+    };
+    for (size_t i = 0; i < sizeof event_handler_attributes /
+        sizeof *event_handler_attributes; ++i)
+    {
+        if (attribute_length == strlen(event_handler_attributes[i]) &&
+            !strnicmp(attribute, event_handler_attributes[i], attribute_length))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool xmlhtml_is_javascript_url(const char *value, bool is_xml)
+{
+    return !is_xml && !strnicmp(value, "javascript:", sizeof "javascript:" - 1);
+}
+
+static struct Minification minify_js_handler(const char *js)
+{
+    const char prefix[] = "function a(){";
+    const char suffix[] = "}";
+    size_t js_length = strlen(js);
+    char *wrapped_js = malloc(sizeof prefix - 1 + js_length + sizeof suffix);
+    struct Minification m = {.result = NULL};
+    if (wrapped_js == NULL) {
+        snprintf(m.error, sizeof m.error, "Cannot allocate memory\n");
+        return m;
+    }
+    memcpy(wrapped_js, prefix, sizeof prefix - 1);
+    memcpy(&wrapped_js[sizeof prefix - 1], js, js_length);
+    memcpy(&wrapped_js[sizeof prefix - 1 + js_length], suffix, sizeof suffix);
+
+    m = minify_js(wrapped_js);
+    free(wrapped_js);
+    if (m.result == NULL) {
+        if (m.error_position >= sizeof prefix - 1) {
+            m.error_position -= sizeof prefix - 1;
+        }
+        else {
+            m.error_position = 0;
+        }
+        return m;
+    }
+
+    size_t result_length = strlen(m.result);
+    if (
+        result_length < sizeof prefix + sizeof suffix - 2 ||
+        strncmp(m.result, prefix, sizeof prefix - 1) ||
+        strcmp(&m.result[result_length - (sizeof suffix - 1)], suffix)
+    ) {
+        free(m.result);
+        m.result = NULL;
+        m.error_position = 0;
+        snprintf(m.error, sizeof m.error, "Unexpected internal JavaScript minification result\n");
+        return m;
+    }
+    size_t body_length = result_length - (sizeof prefix - 1) - (sizeof suffix - 1);
+    memmove(m.result, &m.result[sizeof prefix - 1], body_length);
+    m.result[body_length] = '\0';
+    return m;
+}
+
+static struct EncodedAttribute
+{
+    char *data;
+    size_t length;
+    char quote;
+}
+xmlhtml_encode_attribute(const char *input, char preferred_quote, bool is_xml, bool allow_unquoted)
+{
+    size_t input_length = strlen(input);
+    bool need_quotes = is_xml || !allow_unquoted || input_length == 0;
+    size_t single_quotes = 0, double_quotes = 0;
+    for (size_t i = 0; i < input_length; ++i) {
+        if (input[i] == '&' || input[i] == '<') {
+            need_quotes = true;
+        }
+        if (!need_quotes &&
+            (is_whitespace(input[i]) || strchr("\"'=<>`", input[i]) != NULL))
+        {
+            need_quotes = true;
+        }
+        if (input[i] == '\'') {
+            single_quotes += 1;
+        }
+        else if (input[i] == '"') {
+            double_quotes += 1;
+        }
+    }
+
+    char quote = '\0';
+    if (need_quotes) {
+        if (preferred_quote == '"' || preferred_quote == '\'') {
+            quote = preferred_quote;
+        }
+        else if (double_quotes <= single_quotes) {
+            quote = '"';
+        }
+        else {
+            quote = '\'';
+        }
+    }
+
+    size_t output_length = input_length;
+    for (size_t i = 0; i < input_length; ++i) {
+        if (input[i] == '&') {
+            output_length += sizeof "&amp;" - 2;
+        }
+        else if (input[i] == '<') {
+            output_length += sizeof "&lt;" - 2;
+        }
+        else if (quote == '"' && input[i] == '"') {
+            output_length += sizeof "&quot;" - 2;
+        }
+        else if (quote == '\'' && input[i] == '\'') {
+            output_length += sizeof "&apos;" - 2;
+        }
+    }
+
+    struct EncodedAttribute encoded = {
+        .data = malloc(output_length + 1),
+        .length = 0,
+        .quote = quote,
+    };
+    if (encoded.data == NULL) {
+        return encoded;
+    }
+
+    for (size_t i = 0; i < input_length; ++i) {
+        if (input[i] == '&') {
+            strcpy(&encoded.data[encoded.length], "&amp;");
+            encoded.length += sizeof "&amp;" - 1;
+        }
+        else if (input[i] == '<') {
+            strcpy(&encoded.data[encoded.length], "&lt;");
+            encoded.length += sizeof "&lt;" - 1;
+        }
+        else if (quote == '"' && input[i] == '"') {
+            strcpy(&encoded.data[encoded.length], "&quot;");
+            encoded.length += sizeof "&quot;" - 1;
+        }
+        else if (quote == '\'' && input[i] == '\'') {
+            strcpy(&encoded.data[encoded.length], "&apos;");
+            encoded.length += sizeof "&apos;" - 1;
+        }
+        else {
+            encoded.data[encoded.length++] = input[i];
+        }
+    }
+    encoded.data[encoded.length] = '\0';
+    return encoded;
+}
+
 static struct Minification minify_xmlhtml(const char *xmlhtml, bool is_xml)
 {
     size_t input_strlen = strlen(xmlhtml);
-    struct Minification m = {.result = malloc(input_strlen + 1)};
+    size_t result_capacity = input_strlen + 1;
+    struct Minification m = {.result = malloc(result_capacity)};
     if (m.result == NULL) {
         snprintf(m.error, sizeof m.error, "Cannot allocate memory\n");
         return m;
@@ -1950,6 +2216,10 @@ static struct Minification minify_xmlhtml(const char *xmlhtml, bool is_xml)
                 }
             }
             size_t inline_result_length = strlen(inline_m.result);
+            if (!ensure_result_capacity(&m.result, &result_capacity, result_length + inline_result_length)) {
+                free(inline_m.result);
+                goto error;
+            }
             memcpy(&m.result[result_length], inline_m.result, inline_result_length);
             result_length += inline_result_length;
             free(inline_m.result);
@@ -2206,35 +2476,34 @@ static struct Minification minify_xmlhtml(const char *xmlhtml, bool is_xml)
             }
 
             m.result[result_length++] = '=';
+            char original_quote = '\0';
+            bool copy_raw_value = true;
+            bool original_need_quotes = false;
             if (xmlhtml[i] == '"' || xmlhtml[i] == '\'') {
                 char quote = xmlhtml[i];
                 size_t string_start_i = i;
                 i += 1;
                 value = &xmlhtml[i];
                 value_length = 0;
-                bool need_quotes;
+                original_quote = quote;
                 if (is_xml || syntax_block == SYNTAX_BLOCK_DOCTYPE) {
-                    need_quotes = true;
+                    original_need_quotes = true;
                 }
                 else if (xmlhtml[i] == quote) {
-                    need_quotes = true;
+                    original_need_quotes = true;
                 }
                 else {
-                    need_quotes = false;
+                    original_need_quotes = false;
                     size_t k = i;
                     while (xmlhtml[k] != quote) {
                         if (strchr(" \r\t\n=\"'/", xmlhtml[k]) != NULL) {
-                            need_quotes = true;
+                            original_need_quotes = true;
                             break;
                         }
                         k += 1;
                     }
                 }
-                if (need_quotes) {
-                    m.result[result_length++] = quote;
-                }
                 while (xmlhtml[i] != '\0' && xmlhtml[i] != quote) {
-                    m.result[result_length++] = xmlhtml[i];
                     value_length += 1;
                     i += 1;
                 }
@@ -2254,15 +2523,11 @@ static struct Minification minify_xmlhtml(const char *xmlhtml, bool is_xml)
                         "Illegal character after `%c` in line %%zu, column %%zu\n", quote);
                     goto error;
                 }
-                if (need_quotes) {
-                    m.result[result_length++] = quote;
-                }
             }
             else {
                 value = &xmlhtml[i];
                 value_length = 0;
                 while (strchr(" \r\t\n >=\"'", xmlhtml[i]) == NULL) {
-                    m.result[result_length++] = xmlhtml[i];
                     i += 1;
                     value_length += 1;
                 }
@@ -2294,6 +2559,123 @@ static struct Minification minify_xmlhtml(const char *xmlhtml, bool is_xml)
                 }
                 else {
                     script_type = SCRIPT_TYPE_OTHER;
+                }
+            }
+            if (xmlhtml_is_event_handler_attribute(attribute, attribute_length, is_xml)) {
+                copy_raw_value = false;
+                struct Minification minified_js = minify_js_handler(decoded_value.result);
+                if (minified_js.result == NULL) {
+                    size_t error_position = minified_js.error_position;
+                    xmlhtml_correct_error_position(value, decoded_value.result, &error_position, false);
+                    m.error_position = value - xmlhtml + error_position;
+                    strncpy(m.error, minified_js.error, sizeof m.error);
+                    m.error[sizeof m.error - 1] = '\0';
+                    free(decoded_value.result);
+                    goto error;
+                }
+                struct EncodedAttribute encoded_value = xmlhtml_encode_attribute(
+                    minified_js.result,
+                    original_quote,
+                    is_xml,
+                    syntax_block != SYNTAX_BLOCK_DOCTYPE
+                );
+                free(minified_js.result);
+                if (encoded_value.data == NULL) {
+                    free(decoded_value.result);
+                    goto error;
+                }
+                if (!ensure_result_capacity(
+                    &m.result,
+                    &result_capacity,
+                    result_length + encoded_value.length + 2
+                )) {
+                    free(encoded_value.data);
+                    free(decoded_value.result);
+                    goto error;
+                }
+                if (encoded_value.quote != '\0') {
+                    m.result[result_length++] = encoded_value.quote;
+                }
+                memcpy(&m.result[result_length], encoded_value.data, encoded_value.length);
+                result_length += encoded_value.length;
+                if (encoded_value.quote != '\0') {
+                    m.result[result_length++] = encoded_value.quote;
+                }
+                free(encoded_value.data);
+            }
+            else if (xmlhtml_is_javascript_url(decoded_value.result, is_xml)) {
+                copy_raw_value = false;
+                struct Minification minified_js =
+                    minify_js(&decoded_value.result[sizeof "javascript:" - 1]);
+                if (minified_js.result == NULL) {
+                    size_t error_position = sizeof "javascript:" - 1 + minified_js.error_position;
+                    xmlhtml_correct_error_position(value, decoded_value.result, &error_position, false);
+                    m.error_position = value - xmlhtml + error_position;
+                    strncpy(m.error, minified_js.error, sizeof m.error);
+                    m.error[sizeof m.error - 1] = '\0';
+                    free(decoded_value.result);
+                    goto error;
+                }
+                size_t minified_js_length = strlen(minified_js.result);
+                char *javascript_url = malloc(sizeof "javascript:" - 1 + minified_js_length + 1);
+                if (javascript_url == NULL) {
+                    free(minified_js.result);
+                    free(decoded_value.result);
+                    goto error;
+                }
+                memcpy(javascript_url, "javascript:", sizeof "javascript:" - 1);
+                memcpy(
+                    &javascript_url[sizeof "javascript:" - 1],
+                    minified_js.result,
+                    minified_js_length + 1
+                );
+                free(minified_js.result);
+                struct EncodedAttribute encoded_value = xmlhtml_encode_attribute(
+                    javascript_url,
+                    original_quote,
+                    is_xml,
+                    syntax_block != SYNTAX_BLOCK_DOCTYPE
+                );
+                free(javascript_url);
+                if (encoded_value.data == NULL) {
+                    free(decoded_value.result);
+                    goto error;
+                }
+                if (!ensure_result_capacity(
+                    &m.result,
+                    &result_capacity,
+                    result_length + encoded_value.length + 2
+                )) {
+                    free(encoded_value.data);
+                    free(decoded_value.result);
+                    goto error;
+                }
+                if (encoded_value.quote != '\0') {
+                    m.result[result_length++] = encoded_value.quote;
+                }
+                memcpy(&m.result[result_length], encoded_value.data, encoded_value.length);
+                result_length += encoded_value.length;
+                if (encoded_value.quote != '\0') {
+                    m.result[result_length++] = encoded_value.quote;
+                }
+                free(encoded_value.data);
+            }
+            if (copy_raw_value) {
+                if (!ensure_result_capacity(
+                    &m.result,
+                    &result_capacity,
+                    result_length + value_length + (original_need_quotes ? 2 : 0)
+                )) {
+                    free(decoded_value.result);
+                    goto error;
+                }
+                if (original_need_quotes) {
+                    m.result[result_length++] = original_quote;
+                }
+                memcpy(&m.result[result_length], value, value_length);
+                result_length += value_length;
+                if (original_need_quotes) {
+                    m.result[result_length++] = original_quote;
                 }
             }
             free(decoded_value.result);
