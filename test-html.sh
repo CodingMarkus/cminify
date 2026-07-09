@@ -40,6 +40,34 @@ input='<script type="text&sol;javascript"> { "key" : true } </script>'
 expected='<script type=text&sol;javascript>{"key":!0}</script>'
 assert "$expected" "$input"
 
+input='<a onclick=" return false "></a>'
+expected='<a onclick=return!1></a>'
+assert "$expected" "$input"
+
+input='<a onclick="&quot;a&quot; &amp;&amp; b"></a>'
+expected='<a onclick="&quot;a&quot;&amp;&amp;b"></a>'
+assert "$expected" "$input"
+
+input='<a onclick="if (a)\n b()"></a>'
+expected='<a onclick=if(a)b()></a>'
+assert "$expected" "$input"
+
+input='<body onload=" return false "></body>'
+expected='<body onload=return!1></body>'
+assert "$expected" "$input"
+
+input='<a onfoo=" return false "></a>'
+expected='<a onfoo=" return false "></a>'
+assert "$expected" "$input"
+
+input='<a href="javascript: alert(1) "></a>'
+expected='<a href=javascript:alert(1)></a>'
+assert "$expected" "$input"
+
+input='<a href="javascript: a < b &amp;&amp; c&lt;d"></a>'
+expected='<a href="javascript:a&lt;b&amp;&amp;c&lt;d"></a>'
+assert "$expected" "$input"
+
 input='<html prop=/>'
 expected='<html prop=/>'
 assert "$expected" "$input"
