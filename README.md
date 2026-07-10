@@ -1,3 +1,10 @@
+This fork is now only a mirror. \
+The actively devloped project is on Codeberg: https://codeberg.org/CodingMarkus/cminify
+
+Whenever there is a new release on Codeberg, I will mirror back all changes to this mirror, so if you only want to look at released code or fetch a pre-built release, you can do so on GitHub. You can also fork that project on GitHub but if you want to participate in active development of the main tree (e.g. provide pull requests) or if you want to report issues and expect me to fix them, you need to do so on Codeberg.
+
+---- 
+
 # cminify
 
 This is a minifier for CSS, JavaScript, XML, HTML and JSON, written in C. It can also minify inline
