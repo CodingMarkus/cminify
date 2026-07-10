@@ -12,7 +12,7 @@ build: build/$(OUTPUT)
 
 build/$(OUTPUT): cminify.c
 	mkdir -p build
-	$(COMPILER) -O2 -Wall -Wno-maybe-uninitialized -o build/$(OUTPUT) cminify.c
+	$(COMPILER) -O2 -Wall -o build/$(OUTPUT) cminify.c
 	strip build/$(OUTPUT)
 
 .PHONY: test

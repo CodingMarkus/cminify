@@ -17,12 +17,16 @@ assert()
 		exit 1
 	fi
 }
+
 input='`a\
 b`'
+# shellcheck disable=SC2016
 expected='`ab`'
 assert "$expected" "$input"
 
+# shellcheck disable=SC2016
 input='` a ${ 1 + ` 2 ` + 3 } c` + `d${a}}`'
+# shellcheck disable=SC2016
 expected='` a ${1+` 2 `+3} cd${a}}`'
 assert "$expected" "$input"
 
