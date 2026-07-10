@@ -1,5 +1,2 @@
-archive
-example.*
-build
-input-causing-crash.txt
-test-js-libs
+.build
+.test

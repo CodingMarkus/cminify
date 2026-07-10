@@ -2,7 +2,7 @@
 
 assert()
 {
-	result="$(printf '%b' "$2" | ./build/cminify css -)"
+    result="$(printf '%b' "$2" | ./.build/webmincer css -)"
 	if [ "$?" != "0" ]; then
 		echo 'Crashed on:'
 		echo "$2"

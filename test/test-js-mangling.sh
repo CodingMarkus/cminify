@@ -2,7 +2,7 @@
 
 assert()
 {
-	result="$(printf '%b' "$2" | ./build/cminify js - --mangle-js-identifiers)"
+    result="$(printf '%b' "$2" | ./.build/webmincer js - --mangle-js-identifiers)"
 	if [ "$?" != "0" ]; then
 		echo Crashed on:
 		echo "$2"
@@ -20,7 +20,7 @@ assert()
 
 assert_without_mangling()
 {
-	result="$(printf '%b' "$2" | ./build/cminify js -)"
+    result="$(printf '%b' "$2" | ./.build/webmincer js -)"
 	if [ "$?" != "0" ]; then
 		echo Crashed on:
 		echo "$2"
@@ -38,7 +38,7 @@ assert_without_mangling()
 
 assert_html()
 {
-	result="$(printf '%b' "$2" | ./build/cminify html - --mangle-js-identifiers)"
+    result="$(printf '%b' "$2" | ./.build/webmincer html - --mangle-js-identifiers)"
 	if [ "$?" != "0" ]; then
 		echo Crashed on:
 		echo "$2"
@@ -56,7 +56,7 @@ assert_html()
 
 assert_xml()
 {
-	result="$(printf '%b' "$2" | ./build/cminify xml - --mangle-js-identifiers)"
+    result="$(printf '%b' "$2" | ./.build/webmincer xml - --mangle-js-identifiers)"
 	if [ "$?" != "0" ]; then
 		echo Crashed on:
 		echo "$2"

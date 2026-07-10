@@ -1,187 +1,41 @@
-This fork is now only a mirror. \
-The actively devloped project is on Codeberg: https://codeberg.org/CodingMarkus/cminify
+WebMinCer
+=========
 
-Whenever there is a new release on Codeberg, I will mirror back all changes to this mirror, so if you only want to look at released code or fetch a pre-built release, you can do so on GitHub. You can also fork that project on GitHub but if you want to participate in active development of the main tree (e.g. provide pull requests) or if you want to report issues and expect me to fix them, you need to do so on Codeberg.
+WebMinCer is a minifier for CSS, JavaScript, XML, HTML and JSON, written in C. It can also minify inline scripts, stylesheets and JSON data embedded in XML and HTML markup. JSON input is validated completely. For the other formats, many, though not all, classes of syntax errors are detected. When invalid input is recognized, precise error messages are printed.
 
----- 
+This project is mirrored on [GitHub](https://github.com/CodingMarkus/WebMinCer).
 
-# cminify
 
-This is a minifier for CSS, JavaScript, XML, HTML and JSON, written in C. It can also minify inline
-scripts, stylesheets and JSON data inside XML and HTML markup. JSON input is validated completely;
-for the other formats, many but not all classes of syntax errors are caught. Precise errors
-messages are printed when invalid input is recognized.
+The name WebMinCer is a play on web, minification, and C, as well as the word mincer. The name reflects the tool's purpose: it effectively feeds web-language source files through a virtual mincer to produce compact output.
 
-This project is mirrored on [GitHub](https://github.com/Jumping-Beaver/cminify).
 
-The maintainer can be contacted via the ticket systems or by e-mail at `jumping-beaver@mailbox.org`.
+Origins and relationship to cminify
+-----------------------------------
 
-## Design objectives
+WebMinCer started as a fork of [cminify](https://codeberg.org/Jumping-Beaver/cminify), the minifier originally developed by Jumping-Beaver (aka Lerchensporn). The original project and its design rationale are preserved in the [original cminify README](doc/cminify/README.md).
+
+We are grateful to Jumping-Beaver for the substantial work that made this project possible. WebMinCer builds on that foundation, while its goals may differ slightly from those of cminify and it is intended to be developed more actively.
+
+WebMinCer is an independent project. It is not intended to be a drop-in replacement for cminify, and its goal is not to push changes back into cminify. Users should therefore review the behavior and goals of WebMinCer before adopting it in place of cminify.
+
+
+Design objectives
+-----------------
 
 - Released as single binary with no dependencies except `libc`.
 
-- This tool is intended to be run by Makefile recipes to copy & minimize static assets from a
-  `src/` folder to a `build/release/` folder. An additional debug make-target may omit the
-  minification.  It is not envisioned to create bindings for scripting languages. Just use the
-  command-line interface, or if really needed, usage via FFI should work fine.
+- Easy to build with a simple `make` invocation.
+
+- The only build requirements are a POSIX shell environment and a modern C compiler.
+
+- It is not intended to provide bindings for scripting languages.
 
 - Also minify inline CSS, JavaScript and JSON in HTML and XML documents.
 
-- Produce standard-conform output from any standard-conform input.
+- Extensive unit testing of all features.
 
-- The program should fail on syntax errors and must not fix them.
+- Produce standards-conformant output from any standards-conformant input.
+
+- The program should fail on syntax errors and must not attempt to fix them.
 
 - This minifier is not a cleaner. It should not modify the semantics of the markup.
-
-- Specifially, non-objectives are cleanups that can (and should) be done in the
-  source code if they don't decrease the legibility.  Detection of such
-  optimization potential is in the scope of a linter. Linting may be added in
-  the future but it would be a separate functionality.
-
-   - Not removing empty CSS rules. Why would you have empty rules in the released code?
-   - No merging of CSS properties.
-   - Not transforming e.g. a CSS value of `1000ms` to `1s`; it can be done in the source code.
-   - Not removing doctypes or XML headers. They do have a meaning.
-   - Minification of colors is a possible future objective because doing it in
-     the source code can decrease its legibility.
-   - Not collapsing boolean HTML attributes or omitting `type=text/javascript`.
-   - But mangling of JavaScript identifiers is a possible future objective.
-
-- I think I will not implement the generation of JavaScript source maps because
-  I don't see their strong benefit over reproducing issues in a debug build without minification.
-
-- Cleaning exported SVG files is better done with a cleaner such as `svgcleaner`.
-  With default options, such cleaners substantially modify the markup
-  semantically, which may be desired for exported SVG files but not for
-  hand-written ones.  This minifier is suitable to minify hand-written SVG
-  files.
-
-  A useful manual cleaning recipe for exported SVG files may be:
-  ```
-  svgcleaner picture.svg clean.svg
-  XMLLINT_INDENT="    " xmllint --format clean.svg > picture.svg
-  rm clean.svg
-  ```
-  This generates standard-compliant XML files with indentation to enable manual
-  inspection or adjustment. In a Makefile one can run this minifier on the
-  result to create the release.
-
-## Alternatives
-
-Some alternative minifiers choose different objectives.
-
- - Many minifiers use advanced minification strategies that require large
-   dependencies to parse the input into an abstract syntax tree. Usually they
-   are focused on only one input format and provide many configuration options.
-   If you want maximum minification, prefer such specialized tools.
-
-   This minifier is rather focused on maximizing the web developer
-   productivity: having only one lightweight tool with few options to handle
-   all relevant formats. Moreover its approach enables the best possible
-   runtime performance by looping through the input in a single pass.
-
- - Some minifiers semantically alter the content of the input files, such as
-   fixing errors or removing doctypes, version tags, XML namespaces and
-   encoding information.
-
-   Besides the fact that some of the information can be
-   relevant, my opinion is that these are different concerns that should be
-   handled by separate tools, namely linters or cleaners, and that a minifier
-   should assume (or assert) perfect quality of the input files.
-
-   To illustrate why these are separate concerns, consider that minifiers (and
-   linters) are supposed to run automatically in every build process, whereas
-   cleaners or fixers are rather run manually.
-
- - Some minifiers are quite fault-tolerant. However, if garbage is fed into a
-   minifier then there is a problem somewhere else in the tool or process chain
-   that is good to be alerted about. Strict parsing is a good practice to
-   promote standard conformity.
-
-### Alternative multi-format minifier
-
-https://github.com/tdewolff/minify
-
-Written in Go. Minifies HTML, XML, SVG, JS, CSS, JSON. It is in the package
-repository of Alpine Linux and statically linked binary releases exist.
-
-### Alternative CSS minifiers
-
-https://github.com/csstidy-c/csstidy
-
-Written in C++, not maintained. Prints lots of warnings on valid input.
-
-https://csstidy.sourceforge.net/usage.php
-
-https://github.com/cssnano/cssnano
-
-Written in JavaScript.
-
-https://github.com/clean-css/clean-css
-
-Written in JavaScript.
-
-https://github.com/parcel-bundler/lightningcss
-
-Written in Rust.
-
-https://github.com/fmarcia/uglifycss
-
-Written in JavaScript.
-
-https://yui.github.io/yuicompressor/
-
-Written in Java.
-
-https://github.com/matthiasmullie/minify
-
-Written in PHP. Based on regex, hence it breaks on standard-conform input such as:
-`@import url(http://example.org/*)/**/;`
-
-http://opensource.perlig.de/rcssmin/
-
-Written in Python. Based on regex.
-
-### Alternative JavaScript minifiers
-
-https://terser.org/
-
-https://github.com/mishoo/UglifyJS
-
-https://swc.rs/playground
-
-Written in Rust, but still requires NodeJS dependencies.
-
-https://bun.sh/
-
-Shipped as a 91 MB big single executable.
-
-https://esbuild.github.io/
-
-### SVG optimizers
-
-https://github.com/RazrFalcon/svgcleaner
-
-Written in Rust.
-
-https://github.com/svg/svgo
-
-Written in JavaScript / NodeJS.
-
-https://github.com/scour-project/scour
-
-Written in Python.
-
-### Alternative HTML and XML minifiers
-
-Here we have two very good options with no big dependencies. I still included
-XML and HTML minification in this minifier to cover all needs with one tool.
-
-https://www.html-tidy.org/
-
-Written in C.
-
-`xmllint` as part of libxml2 (https://gitlab.gnome.org/GNOME/libxml2)
-
-Written in C.
-

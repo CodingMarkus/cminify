@@ -14,9 +14,10 @@ _download_file()
 
 _download()
 {
-	mkdir -p test-js-libs || return 1
+	test_dir=.test/test-js-libs
+	mkdir -p "$test_dir" || return 1
 	(
-		cd test-js-libs || exit 1
+		cd "$test_dir" || exit 1
 		if [ ! -f react.development.js ]; then
 			_download_file \
 				https://unpkg.com/react@17.0.2/cjs/react.development.js
@@ -77,10 +78,10 @@ _test_file()
 
 	printf '%s (%s):\n   ' "$file" "$mode"
 	if [ "$mode" = "mangled" ]; then
-		build/cminify js "$file" --mangle-js-identifiers > "$output_file" ||
+		.build/webmincer js "$file" --mangle-js-identifiers > "$output_file" ||
 			return 1
 	else
-		build/cminify js "$file" > "$output_file" || return 1
+		.build/webmincer js "$file" > "$output_file" || return 1
 	fi
 	output_size="$(wc -c < "$output_file" | tr -d ' ')" || return 1
 	if [ "$input_size" = "0" ]; then
@@ -100,7 +101,7 @@ _main()
 	tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/cminify-js-libs.XXXXXX")" || return 1
 	trap 'rm -rf "$tmp_dir"' EXIT HUP INT TERM
 
-	for file in test-js-libs/*.js; do
+	for file in .test/test-js-libs/*.js; do
 		base_name="$(basename "$file" .js)"
 		_test_file "$file" "plain" "$tmp_dir/$base_name.min.js" ||
 			return 1
