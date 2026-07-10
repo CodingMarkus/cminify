@@ -1,4 +1,6 @@
 COMPILER ?= cc
+CC ?= $(COMPILER)
+CFLAGS ?= -O2 -g -Wall -Wextra -Wno-unused-parameter
 ifndef CROSS_TRIPLE
 	OUTPUT := cminify
 else ifeq '$(CROSS_TRIPLE)' 'x86_64-w64-mingw32'
@@ -12,7 +14,10 @@ build: build/$(OUTPUT)
 
 build/$(OUTPUT): cminify.c
 	mkdir -p build
-	$(COMPILER) -O2 -Wall -o build/$(OUTPUT) cminify.c
+	$(CC) $(CFLAGS) -o build/$(OUTPUT) cminify.c
+
+.PHONY: strip
+strip: build/$(OUTPUT)
 	strip build/$(OUTPUT)
 
 .PHONY: test
@@ -21,6 +26,7 @@ test: build
 	./test-css.sh
 	./test-html.sh
 	./test-js.sh
+	./test-js-mangling.sh
 	./test-js-libs.sh
 
 .PHONY: check

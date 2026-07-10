@@ -68,27 +68,44 @@ _download()
 	) || return 1
 }
 
+_test_file()
+{
+	file="$1"
+	mode="$2"
+	output_file="$3"
+	input_size="$(wc -c < "$file" | tr -d ' ')" || return 1
+
+	printf '%s (%s):\n   ' "$file" "$mode"
+	if [ "$mode" = "mangled" ]; then
+		build/cminify js "$file" --mangle-js-identifiers > "$output_file" ||
+			return 1
+	else
+		build/cminify js "$file" > "$output_file" || return 1
+	fi
+	output_size="$(wc -c < "$output_file" | tr -d ' ')" || return 1
+	if [ "$input_size" = "0" ]; then
+		reduction=0.0
+	else
+		reduction="$(
+			awk "BEGIN { print 100.0 - 100.0 * $output_size / $input_size }"
+		)" || return 1
+	fi
+	printf 'Reduced the size by %.1f%% from %s to %s bytes\n' \
+		"$reduction" "$input_size" "$output_size"
+	node -c "$output_file" || return 1
+}
+
 _main()
 {
 	tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/cminify-js-libs.XXXXXX")" || return 1
 	trap 'rm -rf "$tmp_dir"' EXIT HUP INT TERM
 
 	for file in test-js-libs/*.js; do
-		output_file="$tmp_dir/$(basename "$file").min.js"
-		input_size="$(wc -c < "$file" | tr -d ' ')" || return 1
-		printf '%s:\n   ' "$file"
-		build/cminify js "$file" > "$output_file" || return
-		output_size="$(wc -c < "$output_file" | tr -d ' ')" || return 1
-		if [ "$input_size" = "0" ]; then
-			reduction=0.0
-		else
-			reduction="$(
-				awk "BEGIN { print 100.0 - 100.0 * $output_size / $input_size }"
-			)" || return 1
-		fi
-		printf 'Reduced the size by %.1f%% from %s to %s bytes\n' \
-			"$reduction" "$input_size" "$output_size"
-		node -c "$output_file" || return
+		base_name="$(basename "$file" .js)"
+		_test_file "$file" "plain" "$tmp_dir/$base_name.min.js" ||
+			return 1
+		_test_file "$file" "mangled" "$tmp_dir/$base_name.mangled.js" ||
+			return 1
 	done
 }
 
