@@ -26,7 +26,7 @@ Design objectives
 
 - Easy to build with a simple `make` invocation.
 
-- The only build requirements are a POSIX shell environment and a modern C compiler.
+- The only build requirements are a POSIX shell environment, make and a modern C compiler (clang recommended, gcc possible as well).
 
 - It is not intended to provide bindings for scripting languages.
 
@@ -39,3 +39,5 @@ Design objectives
 - The program should fail on syntax errors and must not attempt to fix them.
 
 - This minifier is not a cleaner. It should not modify the semantics of the markup.
+
+The design of optional JavaScript identifier mangling is documented in [JavaScript Identifier Mangling](doc/JSMangler.md).
