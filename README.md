@@ -12,7 +12,7 @@ The name WebMinCer is a play on web, minification, and C, as well as the word mi
 Origins and relationship to cminify
 -----------------------------------
 
-WebMinCer started as a fork of [cminify](https://codeberg.org/Jumping-Beaver/cminify), the minifier originally developed by Jumping-Beaver (aka Lerchensporn). The original project and its design rationale are preserved in the [original cminify README](doc/cminify/README.md).
+WebMinCer started as a fork of [cminify](https://codeberg.org/Jumping-Beaver/cminify), the minifier originally developed by Jumping-Beaver (aka Lerchensporn). The original project and its design rationale are preserved in the [original cminify README](doc/cminify-README.md).
 
 We are grateful to Jumping-Beaver for the substantial work that made this project possible. WebMinCer builds on that foundation, while its goals may differ slightly from those of cminify and it is intended to be developed more actively.
 
