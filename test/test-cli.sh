@@ -85,9 +85,51 @@ assertHelpOutput( )
 }
 
 
+assertReadmeContainsHelpOutput( )
+{
+	_archo_help_file=$1
+	_archo_readme_file=$2
+
+	if ! awk '
+		NR == FNR {
+			if ($0 !~ /^[[:space:]]*$/ || started) {
+				lines[++lineCount] = $0
+				if ($0 !~ /^[[:space:]]*$/) {
+					lastContentLine = lineCount
+				}
+				started = 1
+			}
+			next
+		}
+		lineCount > 0 && $0 == lines[matchedLines + 1] {
+			matchedLines += 1
+			if (matchedLines == lastContentLine) {
+				found = 1
+			}
+			next
+		}
+		$0 == lines[1] {
+			matchedLines = 1
+			next
+		}
+		{
+			matchedLines = 0
+		}
+		END {
+			exit(!found)
+		}
+	' "$_archo_help_file" "$_archo_readme_file"
+	then
+		printf 'Expected README.md to contain the complete help output\n'
+		exit 1
+	fi
+}
+
+
 assertStdout
-	cp "$tmpDir/stdout" "$tmpDir/help-no-args"
+cp "$tmpDir/stdout" "$tmpDir/help-no-args"
 assertHelpOutput "$tmpDir/help-no-args"
+assertReadmeContainsHelpOutput "$tmpDir/help-no-args" README.md
 
 assertStdout -h
 	cp "$tmpDir/stdout" "$tmpDir/help-short"
