@@ -1,19 +1,18 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
-assert()
+set -eu
+
+. test/lib_assert.sh
+
+
+# $1 - Expected minified output.
+# $2 - Input to minify.
+#
+# Verifies XML minification.
+#
+assert( )
 {
-    result="$(printf '%b' "$2" | ./.build/webmincer xml -)"
-	if [ "$?" != "0" ]; then
-		echo 'Crashed on:'
-		echo "$2"
-		exit 1
-	elif [ "$1" != "$result" ]; then
-		echo 'Error: expected:'
-		echo "$1"
-		echo 'got:'
-		echo "$result"
-		exit 1
-	fi
+	assertMinification "$1" "$2" xml -
 }
 
 input='<?xml version="1.0" encoding="iso-8859-1"?>'
@@ -52,4 +51,4 @@ input=' <xml a = " b " > <b>  </b><a /><a b="c"/> </xml>'
 expected=' <xml a=" b "><b>  </b><a/><a b="c"/></xml>'
 assert "$expected" "$input"
 
-echo 'Passed all tests'
+printf 'Passed all tests\n'

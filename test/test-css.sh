@@ -1,19 +1,18 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
-assert()
+set -eu
+
+. test/lib_assert.sh
+
+
+# $1 - Expected minified output.
+# $2 - Input to minify.
+#
+# Verifies CSS minification.
+#
+assert( )
 {
-    result="$(printf '%b' "$2" | ./.build/webmincer css -)"
-	if [ "$?" != "0" ]; then
-		echo 'Crashed on:'
-		echo "$2"
-		exit 1
-	elif [ "$1" != "$result" ]; then
-		echo 'Error: expected:'
-		echo "$1"
-		echo 'got:'
-		echo "$result"
-		exit 1
-	fi
+	assertMinification "$1" "$2" css -
 }
 
 input='/*! do not remove */'
@@ -60,4 +59,4 @@ input='a\{b{}'
 expected='a\{b{}'
 assert "$expected" "$input"
 
-echo 'Passed all tests'
+printf 'Passed all tests\n'

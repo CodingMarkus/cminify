@@ -1,21 +1,18 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
-assert()
+set -eu
+
+. test/lib_assert.sh
+
+
+# $1 - Expected minified output.
+# $2 - Input to minify.
+#
+# Verifies JavaScript minification.
+#
+assert( )
 {
-    result="$(printf '%b' "$2" | ./.build/webmincer js -)"
-	if [ "$?" != "0" ]; then
-		echo Crashed on:
-		echo "$2"
-		echo Standard output:
-		echo "$result"
-		exit 1
-	elif [ "$1" != "$result" ]; then
-		echo 'Error: expected:'
-		echo "$1"
-		echo got:
-		echo "$result"
-		exit 1
-	fi
+	assertMinification "$1" "$2" js -
 }
 
 input='`a\
@@ -174,4 +171,4 @@ input='function a () {}; function b () {}\n if(true) {} ; a=3'
 expected='function a(){}function b(){}if(!0);a=3'
 assert "$expected" "$input"
 
-echo 'Passed all tests'
+printf 'Passed all tests\n'

@@ -3,34 +3,46 @@
  * SPDX-License-Identifier: ISC
  */
 
-#ifndef WEBMINCER_MINIFIER_H
-#define WEBMINCER_MINIFIER_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
 
-struct Minification
-{
-    char *result;
-    char error[256];
-    size_t error_position;
+struct Minification {
+	char * result;
+	char error[256];
+	size_t errorPosition;
 };
 
-enum CommentVariant {COMMENT_VARIANT_CSS, COMMENT_VARIANT_JS};
+enum CommentVariant {
+	CSSCommentVariant,
+	JSCommentVariant,
+};
 
-bool is_whitespace(char c);
-int strnicmp(const char *s1, const char *s2, size_t length);
-bool skip_whitespaces_comments(struct Minification *m, const char *input,
-    size_t *i, char *min, size_t *min_length,
-    enum CommentVariant comment_variant);
-struct Minification minify_css(const char *css);
-struct Minification minify_html(const char *html);
-struct Minification minify_js(const char *js);
-struct Minification minify_js_with_options(const char *js);
-struct Minification minify_js_module_with_options(const char *js);
-struct Minification minify_json(const char *json);
-struct Minification minify_xml(const char *xml);
+bool MangleJSIdentifiersEnabled(  );
 
-extern bool option_mangle_js_identifiers;
 
-#endif
+bool IsWhitespace( char c );
+
+int StrNICmp( const char * s1, const char * s2, size_t length );
+
+bool SkipWhitespacesComments( struct Minification * m,
+							 const char * input,
+							 size_t * i,
+							 char * min,
+							 size_t * minLength,
+							 enum CommentVariant commentVariant );
+
+struct Minification MinifyCSS( const char * css );
+
+struct Minification MinifyHTML( const char * html );
+
+struct Minification MinifyJS( const char * js );
+
+struct Minification MinifyJSWithOptions( const char * js );
+
+struct Minification MinifyJSModuleWithOptions( const char * js );
+
+struct Minification MinifyJSON( const char * json );
+
+struct Minification MinifyXML( const char * xml );

@@ -1,80 +1,56 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
-assert()
+set -eu
+
+. test/lib_assert.sh
+
+
+# $1 - Expected minified output.
+# $2 - Input to minify.
+#
+# Verifies JavaScript minification with identifier mangling.
+#
+assert( )
 {
-    result="$(printf '%b' "$2" | ./.build/webmincer js - --mangle-js-identifiers)"
-	if [ "$?" != "0" ]; then
-		echo Crashed on:
-		echo "$2"
-		echo Standard output:
-		echo "$result"
-		exit 1
-	elif [ "$1" != "$result" ]; then
-		echo 'Error: expected:'
-		echo "$1"
-		echo got:
-		echo "$result"
-		exit 1
-	fi
+	assertMinification "$1" "$2" js - --mangle-js-identifiers
 }
 
-assert_without_mangling()
+
+# $1 - Expected minified output.
+# $2 - Input to minify.
+#
+# Verifies JavaScript minification without identifier mangling.
+#
+assertWithoutMangling( )
 {
-    result="$(printf '%b' "$2" | ./.build/webmincer js -)"
-	if [ "$?" != "0" ]; then
-		echo Crashed on:
-		echo "$2"
-		echo Standard output:
-		echo "$result"
-		exit 1
-	elif [ "$1" != "$result" ]; then
-		echo 'Error: expected:'
-		echo "$1"
-		echo got:
-		echo "$result"
-		exit 1
-	fi
+	assertMinification "$1" "$2" js -
 }
 
-assert_html()
+
+# $1 - Expected minified output.
+# $2 - Input to minify.
+#
+# Verifies HTML minification with identifier mangling.
+#
+assertHTML( )
 {
-    result="$(printf '%b' "$2" | ./.build/webmincer html - --mangle-js-identifiers)"
-	if [ "$?" != "0" ]; then
-		echo Crashed on:
-		echo "$2"
-		echo Standard output:
-		echo "$result"
-		exit 1
-	elif [ "$1" != "$result" ]; then
-		echo 'Error: expected:'
-		echo "$1"
-		echo got:
-		echo "$result"
-		exit 1
-	fi
+	assertMinification "$1" "$2" html - --mangle-js-identifiers
 }
 
-assert_xml()
+
+# $1 - Expected minified output.
+# $2 - Input to minify.
+#
+# Verifies XML minification with identifier mangling.
+#
+assertXML( )
 {
-    result="$(printf '%b' "$2" | ./.build/webmincer xml - --mangle-js-identifiers)"
-	if [ "$?" != "0" ]; then
-		echo Crashed on:
-		echo "$2"
-		echo Standard output:
-		echo "$result"
-		exit 1
-	elif [ "$1" != "$result" ]; then
-		echo 'Error: expected:'
-		echo "$1"
-		echo got:
-		echo "$result"
-		exit 1
-	fi
+	assertMinification "$1" "$2" xml - --mangle-js-identifiers
 }
 
 input='function demo(longName){return longName}'
 expected='function demo(longName){return longName}'
-assert_without_mangling "$expected" "$input"
+assertWithoutMangling "$expected" "$input"
 
 input='function demo(longName){return longName}'
 expected='function demo(a){return a}'
@@ -538,17 +514,17 @@ assert "$expected" "$input"
 input='<script>function demo(longName){let otherName=longName+1;'\
 'return otherName}</script>'
 expected='<script>function demo(a){let b=a+1;return b}</script>'
-assert_html "$expected" "$input"
+assertHTML "$expected" "$input"
 
 input='<script type=module>const moduleGlobal=1;function demo(longName)'\
 '{return moduleGlobal+longName}</script>'
 expected='<script type=module>const G0=1;function demo(a){return G0+a}'\
 '</script>'
-assert_html "$expected" "$input"
+assertHTML "$expected" "$input"
 
 input='<script><![CDATA[ function demo(longName){let otherName=longName+1;'\
 'return otherName} ]]></script>'
 expected='<script>function demo(a){let b=a+1;return b}</script>'
-assert_xml "$expected" "$input"
+assertXML "$expected" "$input"
 
-echo 'Passed all tests'
+printf 'Passed all tests\n'
