@@ -310,10 +310,7 @@ static const char * shorterColorName( const char * color, size_t colorLength )
 
 
 static size_t minifyHexColor(
-	const char * css,
-	size_t i,
-	char * result,
-	size_t * resultLength
+	const char * css, size_t i, char * result, size_t * resultLength
 )
 {
 	size_t colorLength = 0;
@@ -348,10 +345,7 @@ static size_t minifyHexColor(
 
 
 static size_t minifyColorName(
-	const char * css,
-	size_t i,
-	char * result,
-	size_t * resultLength
+	const char * css, size_t i, char * result, size_t * resultLength
 )
 {
 	size_t inputLength = 0;
@@ -386,9 +380,7 @@ static size_t minifyColorName(
 
 
 static bool matchesUnit(
-	const char * css,
-	size_t i,
-	const char * unit
+	const char * css, size_t i, const char * unit
 )
 {
 	for (size_t unitI = 0; unit[unitI] != '\0'; unitI += 1) {
@@ -575,10 +567,7 @@ static size_t minifyDecimalUnitToInteger(
 
 
 static size_t minifyMilliseconds(
-	const char * css,
-	size_t i,
-	char * result,
-	size_t * resultLength
+	const char * css, size_t i, char * result, size_t * resultLength
 )
 {
 	if (i != 0 && isdigit(css[i - 1])) {

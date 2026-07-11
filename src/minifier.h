@@ -19,7 +19,7 @@ enum CommentVariant {
 	JSCommentVariant,
 };
 
-bool MangleOutputEnabled(  );
+bool MangleOutputEnabled( void );
 
 
 bool IsWhitespace( char c );
@@ -27,11 +27,11 @@ bool IsWhitespace( char c );
 int StrNICmp( const char * s1, const char * s2, size_t length );
 
 bool SkipWhitespacesComments( struct Minification * m,
-							 const char * input,
-							 size_t * i,
-							 char * min,
-							 size_t * minLength,
-							 enum CommentVariant commentVariant );
+	const char * input,
+	size_t * i,
+	char * min,
+	size_t * minLength,
+	enum CommentVariant commentVariant );
 
 struct Minification MinifyCSS( const char * css );
 

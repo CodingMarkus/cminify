@@ -16,12 +16,10 @@ bool IsWhitespace( const char c )
 }
 
 
-bool SkipWhitespacesComments( struct Minification * m,
-							 const char * input,
-							 size_t * i,
-							 char * min,
-							 size_t * minLength,
-							 enum CommentVariant commentVariant )
+bool SkipWhitespacesComments(
+	struct Minification * m, const char * input, size_t * i, char * min,
+	size_t * minLength, enum CommentVariant commentVariant
+)
 {
 	bool skippedAllComments = true;
 	do {
@@ -60,18 +58,18 @@ bool SkipWhitespacesComments( struct Minification * m,
 		} else {
 			break;
 		}
-			if (preservedComment != NULL) {
-				skippedAllComments = false;
-				if (min != NULL) {
-					size_t preservedCommentLength =
-						(size_t)(&input[*i] - preservedComment);
-					memcpy(&min[*minLength],
-						   preservedComment,
-						   preservedCommentLength);
-					*minLength += preservedCommentLength;
-				}
+		if (preservedComment != NULL) {
+			skippedAllComments = false;
+			if (min != NULL) {
+				size_t preservedCommentLength =
+					(size_t)(&input[*i] - preservedComment);
+				memcpy(&min[*minLength],
+					preservedComment,
+					preservedCommentLength);
+				*minLength += preservedCommentLength;
 			}
-		} while (true);
+		}
+	} while (true);
 	return (skippedAllComments);
 }
 

@@ -11,6 +11,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+static size_t jsonLiteralLength( const char * json )
+{
+	static const char * const LITERALS[] = {"true", "false", "null"};
+
+	for (size_t i = 0; i < sizeof LITERALS / sizeof *LITERALS; ++i) {
+		size_t length = strlen(LITERALS[i]);
+		if (!strncmp(json, LITERALS[i], length)
+			&& (json[length] == '\0'
+				|| strchr(" \r\t\n],}", json[length]) != NULL)) {
+			return (length);
+		}
+	}
+	return (0);
+}
+
+
 struct Minification MinifyJSON( const char * json )
 {
 	struct Minification m = {.result = malloc(strlen(json) + 1)};
@@ -179,28 +195,11 @@ struct Minification MinifyJSON( const char * json )
 			goto error;
 		}
 
-		if (!strncmp(&json[i], "true", sizeof "true" - 1)
-			&& (json[i + sizeof "true" - 1] == '\0'
-				|| strchr(" \r\t\n],}", json[i + sizeof "true" - 1]))) {
-			strcpy(&m.result[resultLength], "true");
-			resultLength += sizeof "true" - 1;
-			i += sizeof "true" - 1;
-			continue;
-		}
-		if (!strncmp(&json[i], "false", sizeof "false" - 1)
-			&& (json[i + sizeof "false" - 1] == '\0'
-				|| strchr("\r\t\n],}", json[i + sizeof "false" - 1]))) {
-			strcpy(&m.result[resultLength], "false");
-			resultLength += sizeof "false" - 1;
-			i += sizeof "false" - 1;
-			continue;
-		}
-		if (!strncmp(&json[i], "null", sizeof "null" - 1)
-			&& (json[i + sizeof "null" - 1] == '\0'
-				|| strchr("\r\t\n],}", json[i + sizeof "null" - 1]))) {
-			strcpy(&m.result[resultLength], "null");
-			resultLength += sizeof "null" - 1;
-			i += sizeof "null" - 1;
+		size_t literalLength = jsonLiteralLength(&json[i]);
+		if (literalLength > 0) {
+			memcpy(&m.result[resultLength], &json[i], literalLength);
+			resultLength += literalLength;
+			i += literalLength;
 			continue;
 		}
 		if (json[i] >= '0' && json[i] <= '9') {

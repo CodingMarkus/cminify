@@ -3,6 +3,7 @@
  *
  * SPDX-License-Identifier: ISC
  */
+
 #include "js-mangler.h"
 
 #include <stdbool.h>
@@ -136,13 +137,15 @@ struct JsMangleState {
 
 static const char * jsMangleFailureReason = NULL;
 
-static void jsManglePreviousNext( const char * js,
-								 size_t start,
-								 size_t end,
-								 size_t wordStart,
-								 size_t wordEnd,
-								 char * previous,
-								 char * next );
+static void jsManglePreviousNext(
+	const char * js,
+	size_t start,
+	size_t end,
+	size_t wordStart,
+	size_t wordEnd,
+	char * previous,
+	char * next
+);
 
 static bool jsIdentifierStart( char c )
 {
@@ -273,8 +276,9 @@ static bool jsRegexStart( const char * js, size_t start, size_t i )
 }
 
 
-static size_t
-jsFindMatching( const char * js, size_t i, size_t end, char open, char close )
+static size_t jsFindMatching(
+	const char * js, size_t i, size_t end, char open, char close
+)
 {
 	size_t nesting = 1;
 	for (i += 1; i < end; ++i) {
@@ -295,11 +299,10 @@ jsFindMatching( const char * js, size_t i, size_t end, char open, char close )
 }
 
 
-static bool jsMangleAddToken( struct JsMangleProgram * program,
-							 enum JsMangleTokenKind kind,
-							 size_t start,
-							 size_t length,
-							 char punctuation )
+static bool jsMangleAddToken(
+	struct JsMangleProgram * program, enum JsMangleTokenKind kind, size_t start,
+	size_t length, char punctuation
+)
 {
 	if (program->tokensLength >= program->tokensCapacity) {
 		return (false);
@@ -310,8 +313,9 @@ static bool jsMangleAddToken( struct JsMangleProgram * program,
 }
 
 
-static bool
-jsMangleTokenize( const char * js, size_t end, struct JsMangleProgram * program )
+static bool jsMangleTokenize(
+	const char * js, size_t end, struct JsMangleProgram * program
+)
 {
 	for (size_t i = 0; i < end; ++i) {
 		if (IsWhitespace(js[i])) {
@@ -363,9 +367,9 @@ jsMangleTokenize( const char * js, size_t end, struct JsMangleProgram * program 
 }
 
 
-static void jsMangleCountProgram( const char * js,
-								 size_t end,
-								 struct JsMangleCounts * counts )
+static void jsMangleCountProgram(
+	const char * js, size_t end, struct JsMangleCounts * counts
+)
 {
 	counts->scopes = 1;
 	for (size_t i = 0; i < end; ++i) {
@@ -393,8 +397,9 @@ static void jsMangleCountProgram( const char * js,
 }
 
 
-static bool jsMangleAllocProgram( struct JsMangleProgram * program,
-								 struct JsMangleCounts counts )
+static bool jsMangleAllocProgram(
+	struct JsMangleProgram * program, struct JsMangleCounts counts
+)
 {
 	program->tokensCapacity = counts.tokens;
 	program->scopesCapacity = counts.scopes;
@@ -439,8 +444,9 @@ static bool jsMangleAllocProgram( struct JsMangleProgram * program,
 }
 
 
-static bool jsMangleAllocState( struct JsMangleState * state,
-							   struct JsMangleCounts counts )
+static bool jsMangleAllocState(
+	struct JsMangleState * state, struct JsMangleCounts counts
+)
 {
 	state->editsCapacity = counts.identifiers * 2 + 1;
 	state->mapsCapacity = counts.identifiers + 1;
@@ -455,8 +461,9 @@ static bool jsMangleAllocState( struct JsMangleState * state,
 }
 
 
-static size_t
-jsMangleCountIdentifiers( const char * js, size_t start, size_t end )
+static size_t jsMangleCountIdentifiers(
+	const char * js, size_t start, size_t end
+)
 {
 	size_t count = 0;
 	for (size_t i = start; i < end; ++i) {
@@ -478,9 +485,9 @@ jsMangleCountIdentifiers( const char * js, size_t start, size_t end )
 }
 
 
-static bool jsMangleAllocBindings( struct JsMangleBinding ** bindings,
-								  size_t * capacity,
-								  size_t count )
+static bool jsMangleAllocBindings(
+	struct JsMangleBinding ** bindings, size_t * capacity, size_t count
+)
 {
 	*capacity = count;
 	if (*capacity == 0) {
@@ -492,9 +499,9 @@ static bool jsMangleAllocBindings( struct JsMangleBinding ** bindings,
 }
 
 
-static bool jsMangleAddScope( struct JsMangleProgram * program,
-							 size_t parent,
-							 size_t tokenStart )
+static bool jsMangleAddScope(
+	struct JsMangleProgram * program, size_t parent, size_t tokenStart
+)
 {
 	if (program->scopesLength >= program->scopesCapacity) {
 		return (false);
@@ -505,9 +512,9 @@ static bool jsMangleAddScope( struct JsMangleProgram * program,
 }
 
 
-static bool jsMangleAddDeclaration( struct JsMangleProgram * program,
-								   size_t token,
-								   size_t scope )
+static bool jsMangleAddDeclaration(
+	struct JsMangleProgram * program, size_t token, size_t scope
+)
 {
 	if (program->declarationsLength >= program->declarationsCapacity) {
 		return (false);
@@ -518,9 +525,9 @@ static bool jsMangleAddDeclaration( struct JsMangleProgram * program,
 }
 
 
-static bool jsMangleAddReference( struct JsMangleProgram * program,
-								 size_t token,
-								 size_t scope )
+static bool jsMangleAddReference(
+	struct JsMangleProgram * program, size_t token, size_t scope
+)
 {
 	if (program->referencesLength >= program->referencesCapacity) {
 		return (false);
@@ -531,9 +538,9 @@ static bool jsMangleAddReference( struct JsMangleProgram * program,
 }
 
 
-static bool jsMangleTokenEquals( const char * js,
-								const struct JsMangleToken * token,
-								const char * word )
+static bool jsMangleTokenEquals(
+	const char * js, const struct JsMangleToken * token, const char * word
+)
 {
 	size_t length = strlen(word);
 	return (token->kind == JS_MANGLE_TOKEN_IDENTIFIER
@@ -577,8 +584,9 @@ static struct JsMangleNameIndex * jsMangleFindNameIndex(
 }
 
 
-static bool jsMangleBuildNameIndex( struct JsMangleProgram * program,
-								   const char * js )
+static bool jsMangleBuildNameIndex(
+	struct JsMangleProgram * program, const char * js
+)
 {
 	for (size_t i = 0; i < program->tokensLength; ++i) {
 		struct JsMangleToken * token = &program->tokens[i];
@@ -678,8 +686,9 @@ static bool jsMangleBuildPunctuationIndex( struct JsMangleProgram * program )
 }
 
 
-static size_t jsMangleFindTokenStart( struct JsMangleProgram * program,
-									 size_t start )
+static size_t jsMangleFindTokenStart(
+	struct JsMangleProgram * program, size_t start
+)
 {
 	size_t left = 0;
 	size_t right = program->tokensLength;
@@ -695,9 +704,10 @@ static size_t jsMangleFindTokenStart( struct JsMangleProgram * program,
 }
 
 
-static size_t jsMangleFindOccurrenceStart( struct JsMangleProgram * program,
-										  struct JsMangleNameIndex * index,
-										  size_t start )
+static size_t jsMangleFindOccurrenceStart(
+	struct JsMangleProgram * program, struct JsMangleNameIndex * index,
+	size_t start
+)
 {
 	size_t left = 0;
 	size_t right = index->occurrencesLength;
@@ -715,9 +725,9 @@ static size_t jsMangleFindOccurrenceStart( struct JsMangleProgram * program,
 }
 
 
-static bool jsMangleBuildProgram( const char * js,
-								 size_t end,
-								 struct JsMangleProgram * program )
+static bool jsMangleBuildProgram(
+	const char * js, size_t end, struct JsMangleProgram * program
+)
 {
 	if (!jsMangleTokenize(js, end, program)) {
 		return (false);
@@ -823,9 +833,9 @@ static void jsMangleClearEdit( struct JsMangleEdit * edit )
 }
 
 
-static bool jsMangleSetEditReplacement( struct JsMangleEdit * edit,
-									   const char * replacement,
-									   size_t replacementLength )
+static bool jsMangleSetEditReplacement(
+	struct JsMangleEdit * edit, const char * replacement, size_t replacementLength
+)
 {
 	if (replacementLength < sizeof edit->replacementStorage) {
 		edit->replacement = edit->replacementStorage;
@@ -852,11 +862,10 @@ static void jsMangleFreeEdits( struct JsMangleState * state )
 }
 
 
-static bool jsMangleAddEdit( struct JsMangleState * state,
-							size_t start,
-							size_t length,
-							const char * replacement,
-							size_t replacementLength )
+static bool jsMangleAddEdit(
+	struct JsMangleState * state, size_t start, size_t length,
+	const char * replacement, size_t replacementLength
+)
 {
 	if (!jsMangleEnsureEditCapacity(state)) {
 		return (false);
@@ -873,11 +882,10 @@ static bool jsMangleAddEdit( struct JsMangleState * state,
 }
 
 
-static bool jsMangleAddShorthandEdit( struct JsMangleState * state,
-									 size_t start,
-									 size_t length,
-									 const char * replacement,
-									 size_t replacementLength )
+static bool jsMangleAddShorthandEdit(
+	struct JsMangleState * state, size_t start, size_t length,
+	const char * replacement, size_t replacementLength
+)
 {
 	if (!jsMangleEnsureEditCapacity(state)) {
 		return (false);
@@ -908,12 +916,10 @@ static bool jsMangleAddShorthandEdit( struct JsMangleState * state,
 }
 
 
-static bool jsMangleAddImportAliasEdit( struct JsMangleState * state,
-									   size_t start,
-									   const char * original,
-									   size_t length,
-									   const char * replacement,
-									   size_t replacementLength )
+static bool jsMangleAddImportAliasEdit(
+	struct JsMangleState * state, size_t start, const char * original,
+	size_t length, const char * replacement, size_t replacementLength
+)
 {
 	const char as[] = " as ";
 	if (!jsMangleEnsureEditCapacity(state)) {
@@ -940,12 +946,10 @@ static bool jsMangleAddImportAliasEdit( struct JsMangleState * state,
 }
 
 
-static bool jsMangleAddPatternAliasEdit( struct JsMangleState * state,
-										size_t start,
-										const char * original,
-										size_t length,
-										const char * replacement,
-										size_t replacementLength )
+static bool jsMangleAddPatternAliasEdit(
+	struct JsMangleState * state, size_t start, const char * original,
+	size_t length, const char * replacement, size_t replacementLength
+)
 {
 	if (!jsMangleEnsureEditCapacity(state)) {
 		return (false);
@@ -977,11 +981,10 @@ static int jsMangleCompareEdits( const void * a, const void * b )
 }
 
 
-static bool jsMangleAddMap( struct JsMangleProgram * program,
-						   struct JsMangleState * state,
-						   struct JsMangleBinding binding,
-						   size_t scopeStart,
-						   size_t scopeEnd )
+static bool jsMangleAddMap(
+	struct JsMangleProgram * program, struct JsMangleState * state,
+	struct JsMangleBinding binding, size_t scopeStart, size_t scopeEnd
+)
 {
 	if (state->mapsLength >= state->mapsCapacity) {
 		return (false);
@@ -1008,8 +1011,9 @@ static bool jsMangleAddMap( struct JsMangleProgram * program,
 }
 
 
-static bool
-jsMangleAddUnsafeRange( struct JsMangleState * state, size_t start, size_t end )
+static bool jsMangleAddUnsafeRange(
+	struct JsMangleState * state, size_t start, size_t end
+)
 {
 	if (state->unsafeRangesLength >= state->unsafeRangesCapacity) {
 		return (false);
@@ -1032,20 +1036,18 @@ static bool jsMangleInUnsafeRange( struct JsMangleState * state, size_t i )
 }
 
 
-static bool jsMangleSameName( const char * a,
-							 size_t aLength,
-							 const char * b,
-							 size_t bLength )
+static bool jsMangleSameName(
+	const char * a, size_t aLength, const char * b, size_t bLength
+)
 {
 	return (aLength == bLength && !strncmp(a, b, aLength));
 }
 
 
-static bool jsMangleAddBinding( struct JsMangleBinding ** bindings,
-							   size_t * bindingsLength,
-							   size_t * bindingsCapacity,
-							   const char * name,
-							   size_t length )
+static bool jsMangleAddBinding(
+	struct JsMangleBinding ** bindings, size_t * bindingsLength,
+	size_t * bindingsCapacity, const char * name, size_t length
+)
 {
 	if (length <= 1 || jsKeyword(name, length)) {
 		return (true);
@@ -1066,12 +1068,10 @@ static bool jsMangleAddBinding( struct JsMangleBinding ** bindings,
 }
 
 
-static bool jsMangleAddImportBinding( struct JsMangleBinding ** bindings,
-									 size_t * bindingsLength,
-									 size_t * bindingsCapacity,
-									 const char * name,
-									 size_t length,
-									 bool importBare )
+static bool jsMangleAddImportBinding(
+	struct JsMangleBinding ** bindings, size_t * bindingsLength,
+	size_t * bindingsCapacity, const char * name, size_t length, bool importBare
+)
 {
 	if (!jsMangleAddBinding(
 			bindings, bindingsLength, bindingsCapacity, name, length)) {
@@ -1088,10 +1088,10 @@ static bool jsMangleAddImportBinding( struct JsMangleBinding ** bindings,
 }
 
 
-static bool jsMangleBindingListContains( struct JsMangleBinding * bindings,
-										size_t bindingsLength,
-										const char * name,
-										size_t length )
+static bool jsMangleBindingListContains(
+	struct JsMangleBinding * bindings, size_t bindingsLength, const char * name,
+	size_t length
+)
 {
 	for (size_t i = 0; i < bindingsLength; ++i) {
 		if (jsMangleSameName(
@@ -1103,13 +1103,15 @@ static bool jsMangleBindingListContains( struct JsMangleBinding * bindings,
 }
 
 
-static bool jsMangleAddGlobalBinding( struct JsMangleBinding ** bindings,
-									 size_t * bindingsLength,
-									 size_t * bindingsCapacity,
-									 struct JsMangleBinding * excluded,
-									 size_t excludedLength,
-									 const char * name,
-									 size_t length )
+static bool jsMangleAddGlobalBinding(
+	struct JsMangleBinding ** bindings,
+	size_t * bindingsLength,
+	size_t * bindingsCapacity,
+	struct JsMangleBinding * excluded,
+	size_t excludedLength,
+	const char * name,
+	size_t length
+)
 {
 	if (jsMangleBindingListContains(excluded, excludedLength, name, length)) {
 		return (true);
@@ -1119,14 +1121,16 @@ static bool jsMangleAddGlobalBinding( struct JsMangleBinding ** bindings,
 }
 
 
-static bool jsMangleAddGlobalImportBinding( struct JsMangleBinding ** bindings,
-										   size_t * bindingsLength,
-										   size_t * bindingsCapacity,
-										   struct JsMangleBinding * excluded,
-										   size_t excludedLength,
-										   const char * name,
-										   size_t length,
-										   bool importBare )
+static bool jsMangleAddGlobalImportBinding(
+	struct JsMangleBinding ** bindings,
+	size_t * bindingsLength,
+	size_t * bindingsCapacity,
+	struct JsMangleBinding * excluded,
+	size_t excludedLength,
+	const char * name,
+	size_t length,
+	bool importBare
+)
 {
 	if (jsMangleBindingListContains(excluded, excludedLength, name, length)) {
 		return (true);
@@ -1136,12 +1140,10 @@ static bool jsMangleAddGlobalImportBinding( struct JsMangleBinding ** bindings,
 }
 
 
-static bool jsMangleCollectPatternBindings( const char * js,
-										   size_t start,
-										   size_t end,
-										   struct JsMangleBinding ** bindings,
-										   size_t * bindingsLength,
-										   size_t * bindingsCapacity )
+static bool jsMangleCollectPatternBindings(
+	const char * js, size_t start, size_t end, struct JsMangleBinding ** bindings,
+	size_t * bindingsLength, size_t * bindingsCapacity
+)
 {
 	char containers[64];
 	size_t containersLength = 0;
@@ -1188,15 +1190,16 @@ static bool jsMangleCollectPatternBindings( const char * js,
 }
 
 
-static bool
-jsMangleCollectGlobalPatternBindings( const char * js,
-									 size_t start,
-									 size_t end,
-									 struct JsMangleBinding ** bindings,
-									 size_t * bindingsLength,
-									 size_t * bindingsCapacity,
-									 struct JsMangleBinding * excluded,
-									 size_t excludedLength )
+static bool jsMangleCollectGlobalPatternBindings(
+	const char * js,
+	size_t start,
+	size_t end,
+	struct JsMangleBinding ** bindings,
+	size_t * bindingsLength,
+	size_t * bindingsCapacity,
+	struct JsMangleBinding * excluded,
+	size_t excludedLength
+)
 {
 	struct JsMangleBinding * patternBindings = NULL;
 	size_t patternBindingsLength = 0;
@@ -1235,12 +1238,10 @@ done:
 }
 
 
-static size_t jsMangleNameCount( struct JsMangleProgram * program,
-								const char * js,
-								size_t start,
-								size_t end,
-								const char * name,
-								size_t length )
+static size_t jsMangleNameCount(
+	struct JsMangleProgram * program, const char * js, size_t start, size_t end,
+	const char * name, size_t length
+)
 {
 	struct JsMangleNameIndex * index
 		= jsMangleFindNameIndex(program, name, length);
@@ -1266,23 +1267,19 @@ static size_t jsMangleNameCount( struct JsMangleProgram * program,
 }
 
 
-static bool jsMangleNameUsed( struct JsMangleProgram * program,
-							 const char * js,
-							 size_t start,
-							 size_t end,
-							 const char * name,
-							 size_t length )
+static bool jsMangleNameUsed(
+	struct JsMangleProgram * program, const char * js, size_t start, size_t end,
+	const char * name, size_t length
+)
 {
 	return (jsMangleNameCount(program, js, start, end, name, length) != 0);
 }
 
 
-static size_t jsMangleCollectVisibleMaps( struct JsMangleProgram * program,
-										 const char * js,
-										 size_t start,
-										 size_t end,
-										 struct JsMangleState * state,
-										 struct JsMangleMap * visibleMaps )
+static size_t jsMangleCollectVisibleMaps(
+	struct JsMangleProgram * program, const char * js, size_t start, size_t end,
+	struct JsMangleState * state, struct JsMangleMap * visibleMaps
+)
 {
 	size_t visibleMapsLength = 0;
 	size_t generation = ++program->visibleGeneration;
@@ -1317,10 +1314,10 @@ static size_t jsMangleCollectVisibleMaps( struct JsMangleProgram * program,
 }
 
 
-static bool jsMangleReplacementVisible( struct JsMangleMap * visibleMaps,
-									   size_t visibleMapsLength,
-									   const char * name,
-									   size_t length )
+static bool jsMangleReplacementVisible(
+	struct JsMangleMap * visibleMaps, size_t visibleMapsLength, const char * name,
+	size_t length
+)
 {
 	for (size_t i = 0; i < visibleMapsLength; ++i) {
 		if (jsMangleSameName(visibleMaps[i].replacement,
@@ -1334,12 +1331,10 @@ static bool jsMangleReplacementVisible( struct JsMangleMap * visibleMaps,
 }
 
 
-static void jsMangleWriteNameSuffix( size_t index,
-									size_t width,
-									const char * alphabet,
-									size_t alphabetLength,
-									char * name,
-									size_t * length )
+static void jsMangleWriteNameSuffix(
+	size_t index, size_t width, const char * alphabet, size_t alphabetLength,
+	char * name, size_t * length
+)
 {
 	size_t start = *length;
 	for (size_t i = 0; i < width; ++i) {
@@ -1377,7 +1372,9 @@ static void jsMangleMakeName( size_t index, char * name, size_t * length )
 }
 
 
-static void jsMangleMakeGlobalName( size_t index, char * name, size_t * length )
+static void jsMangleMakeGlobalName(
+	size_t index, char * name, size_t * length
+)
 {
 	const char alphabet[]
 		= "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -1396,13 +1393,15 @@ static void jsMangleMakeGlobalName( size_t index, char * name, size_t * length )
 }
 
 
-static void jsManglePreviousNext( const char * js,
-								 size_t start,
-								 size_t end,
-								 size_t wordStart,
-								 size_t wordEnd,
-								 char * previous,
-								 char * next )
+static void jsManglePreviousNext(
+	const char * js,
+	size_t start,
+	size_t end,
+	size_t wordStart,
+	size_t wordEnd,
+	char * previous,
+	char * next
+)
 {
 	size_t i = wordStart;
 	*previous = '\0';
@@ -1423,10 +1422,9 @@ static void jsManglePreviousNext( const char * js,
 }
 
 
-static bool jsManglePreviousWordEquals( const char * js,
-									   size_t start,
-									   size_t wordStart,
-									   const char * word )
+static bool jsManglePreviousWordEquals(
+	const char * js, size_t start, size_t wordStart, const char * word
+)
 {
 	size_t i = wordStart;
 	while (i > start && IsWhitespace(js[i - 1])) {
@@ -1512,7 +1510,9 @@ static bool jsMangleFunctionUnsafe( const char * js, size_t start, size_t end )
 }
 
 
-static bool jsMangleIsModule( const char * js, struct JsMangleProgram * program )
+static bool jsMangleIsModule(
+	const char * js, struct JsMangleProgram * program
+)
 {
 	for (size_t i = 0; i < program->tokensLength; ++i) {
 		if (jsMangleTokenEquals(js, &program->tokens[i], "import")
@@ -1524,12 +1524,13 @@ static bool jsMangleIsModule( const char * js, struct JsMangleProgram * program 
 }
 
 
-static char jsManglePreviousPunctuation( struct JsMangleProgram * program,
-										size_t tokenI,
-										size_t minStart );
+static char jsManglePreviousPunctuation(
+	struct JsMangleProgram * program, size_t tokenI, size_t minStart
+);
 
-static bool jsMangleTopLevelUnsafe( const char * js,
-								   struct JsMangleProgram * program )
+static bool jsMangleTopLevelUnsafe(
+	const char * js, struct JsMangleProgram * program
+)
 {
 	size_t curlyNesting = 0;
 	size_t roundNesting = 0;
@@ -1573,12 +1574,10 @@ static bool jsMangleTopLevelUnsafe( const char * js,
 }
 
 
-static bool jsMangleCollectParams( const char * js,
-								  size_t start,
-								  size_t end,
-								  struct JsMangleBinding ** bindings,
-								  size_t * bindingsLength,
-								  size_t * bindingsCapacity )
+static bool jsMangleCollectParams(
+	const char * js, size_t start, size_t end, struct JsMangleBinding ** bindings,
+	size_t * bindingsLength, size_t * bindingsCapacity
+)
 {
 	bool expectName = true;
 	size_t nesting = 0;
@@ -1632,12 +1631,10 @@ static bool jsMangleCollectParams( const char * js,
 }
 
 
-static bool jsMangleCollectExportClause( const char * js,
-										size_t start,
-										size_t end,
-										struct JsMangleBinding ** bindings,
-										size_t * bindingsLength,
-										size_t * bindingsCapacity )
+static bool jsMangleCollectExportClause(
+	const char * js, size_t start, size_t end, struct JsMangleBinding ** bindings,
+	size_t * bindingsLength, size_t * bindingsCapacity
+)
 {
 	size_t close = jsFindMatching(js, start, end, '{', '}');
 	if (close >= end) {
@@ -1684,12 +1681,10 @@ static bool jsMangleCollectExportClause( const char * js,
 }
 
 
-static bool
-jsMangleCollectExportedDeclarations( const char * js,
-									size_t end,
-									struct JsMangleBinding ** bindings,
-									size_t * bindingsLength,
-									size_t * bindingsCapacity )
+static bool jsMangleCollectExportedDeclarations(
+	const char * js, size_t end, struct JsMangleBinding ** bindings,
+	size_t * bindingsLength, size_t * bindingsCapacity
+)
 {
 	size_t curlyNesting = 0;
 	size_t roundNesting = 0;
@@ -1833,14 +1828,15 @@ jsMangleCollectExportedDeclarations( const char * js,
 }
 
 
-static bool
-jsMangleCollectGlobalDeclarations( const char * js,
-								  size_t end,
-								  struct JsMangleBinding ** bindings,
-								  size_t * bindingsLength,
-								  size_t * bindingsCapacity,
-								  struct JsMangleBinding * excluded,
-								  size_t excludedLength )
+static bool jsMangleCollectGlobalDeclarations(
+	const char * js,
+	size_t end,
+	struct JsMangleBinding ** bindings,
+	size_t * bindingsLength,
+	size_t * bindingsCapacity,
+	struct JsMangleBinding * excluded,
+	size_t excludedLength
+)
 {
 	size_t curlyNesting = 0;
 	size_t roundNesting = 0;
@@ -2094,12 +2090,10 @@ jsMangleCollectGlobalDeclarations( const char * js,
 }
 
 
-static bool jsMangleCollectDeclarations( const char * js,
-										size_t start,
-										size_t end,
-										struct JsMangleBinding ** bindings,
-										size_t * bindingsLength,
-										size_t * bindingsCapacity )
+static bool jsMangleCollectDeclarations(
+	const char * js, size_t start, size_t end, struct JsMangleBinding ** bindings,
+	size_t * bindingsLength, size_t * bindingsCapacity
+)
 {
 	for (size_t i = start; i < end; ++i) {
 		if (js[i] == '"' || js[i] == '\'' || js[i] == '`') {
@@ -2241,12 +2235,11 @@ static bool jsMangleCollectDeclarations( const char * js,
 }
 
 
-static bool jsMangleAssignGlobalNames( struct JsMangleProgram * program,
-									  const char * js,
-									  size_t end,
-									  struct JsMangleState * state,
-									  struct JsMangleBinding * bindings,
-									  size_t bindingsLength )
+static bool jsMangleAssignGlobalNames(
+	struct JsMangleProgram * program, const char * js, size_t end,
+	struct JsMangleState * state, struct JsMangleBinding * bindings,
+	size_t bindingsLength
+)
 {
 	size_t nameIndex = 0;
 	for (size_t i = 0; i < bindingsLength; ++i) {
@@ -2296,9 +2289,10 @@ jsMangleFindBinding( struct JsMangleBinding * bindings,
 }
 
 
-static bool jsMangleIndexBindings( struct JsMangleProgram * program,
-								  struct JsMangleBinding * bindings,
-								  size_t bindingsLength )
+static bool jsMangleIndexBindings(
+	struct JsMangleProgram * program, struct JsMangleBinding * bindings,
+	size_t bindingsLength
+)
 {
 	for (size_t i = 0; i < bindingsLength; ++i) {
 		if (bindings[i].nameIndex == NULL) {
@@ -2314,8 +2308,9 @@ static bool jsMangleIndexBindings( struct JsMangleProgram * program,
 }
 
 
-static void jsMangleClearBindingIndex( struct JsMangleBinding * bindings,
-									  size_t bindingsLength )
+static void jsMangleClearBindingIndex(
+	struct JsMangleBinding * bindings, size_t bindingsLength
+)
 {
 	for (size_t i = 0; i < bindingsLength; ++i) {
 		if (bindings[i].nameIndex != NULL
@@ -2326,11 +2321,9 @@ static void jsMangleClearBindingIndex( struct JsMangleBinding * bindings,
 }
 
 
-static bool jsMangleNameUsedRaw( const char * js,
-								size_t start,
-								size_t end,
-								const char * name,
-								size_t length )
+static bool jsMangleNameUsedRaw(
+	const char * js, size_t start, size_t end, const char * name, size_t length
+)
 {
 	for (size_t i = start; i < end; ++i) {
 		if (js[i] == '"' || js[i] == '\'' || js[i] == '`') {
@@ -2355,10 +2348,10 @@ static bool jsMangleNameUsedRaw( const char * js,
 }
 
 
-static bool jsMangleReplacementUsedInScope( struct JsMangleBinding * bindings,
-										   size_t bindingsLength,
-										   const char * name,
-										   size_t length )
+static bool jsMangleReplacementUsedInScope(
+	struct JsMangleBinding * bindings, size_t bindingsLength, const char * name,
+	size_t length
+)
 {
 	for (size_t i = 0; i < bindingsLength; ++i) {
 		if (bindings[i].replacementLength != 0
@@ -2373,14 +2366,16 @@ static bool jsMangleReplacementUsedInScope( struct JsMangleBinding * bindings,
 }
 
 
-static bool jsMangleAssignNames( struct JsMangleProgram * program,
-								const char * js,
-								size_t start,
-								size_t end,
-								size_t signatureEnd,
-								struct JsMangleState * state,
-								struct JsMangleBinding * bindings,
-								size_t bindingsLength )
+static bool jsMangleAssignNames(
+	struct JsMangleProgram * program,
+	const char * js,
+	size_t start,
+	size_t end,
+	size_t signatureEnd,
+	struct JsMangleState * state,
+	struct JsMangleBinding * bindings,
+	size_t bindingsLength
+)
 {
 	struct JsMangleMap * visibleMaps = NULL;
 	size_t visibleMapsLength = 0;
@@ -2460,10 +2455,9 @@ static bool jsMangleInImportSpecifier( const char * js, size_t wordStart )
 }
 
 
-static bool jsMangleInDeclarationPattern( const char * js,
-										 size_t start,
-										 size_t end,
-										 size_t wordStart )
+static bool jsMangleInDeclarationPattern(
+	const char * js, size_t start, size_t end, size_t wordStart
+)
 {
 	size_t search = wordStart;
 	while (search > start) {
@@ -2507,10 +2501,9 @@ static bool jsMangleInDeclarationPattern( const char * js,
 }
 
 
-static bool jsMangleInParameterPattern( const char * js,
-									   size_t start,
-									   size_t end,
-									   size_t wordStart )
+static bool jsMangleInParameterPattern(
+	const char * js, size_t start, size_t end, size_t wordStart
+)
 {
 	size_t patternStart = wordStart;
 	size_t curly = 0;
@@ -2606,9 +2599,9 @@ static bool jsMangleInParameterPattern( const char * js,
 }
 
 
-static char jsManglePreviousPunctuation( struct JsMangleProgram * program,
-										size_t tokenI,
-										size_t minStart )
+static char jsManglePreviousPunctuation(
+	struct JsMangleProgram * program, size_t tokenI, size_t minStart
+)
 {
 	while (tokenI > 0) {
 		tokenI -= 1;
@@ -2629,9 +2622,9 @@ static char jsManglePreviousPunctuation( struct JsMangleProgram * program,
 }
 
 
-static char jsMangleNextPunctuation( struct JsMangleProgram * program,
-									size_t tokenI,
-									size_t maxEnd )
+static char jsMangleNextPunctuation(
+	struct JsMangleProgram * program, size_t tokenI, size_t maxEnd
+)
 {
 	for (tokenI += 1; tokenI < program->tokensLength; ++tokenI) {
 		struct JsMangleToken * token = &program->tokens[tokenI];
@@ -2652,7 +2645,8 @@ static char jsMangleNextPunctuation( struct JsMangleProgram * program,
 
 
 static size_t jsMangleEnclosingOpenPunctuationIndex(
-	struct JsMangleProgram * program, size_t tokenI, size_t minStart )
+	struct JsMangleProgram * program, size_t tokenI, size_t minStart
+)
 {
 	size_t openI = program->tokens[tokenI].enclosingOpen;
 	if (openI == SIZE_MAX || program->tokens[openI].start < minStart) {
@@ -2662,9 +2656,9 @@ static size_t jsMangleEnclosingOpenPunctuationIndex(
 }
 
 
-static char jsMangleEnclosingClosePunctuation( struct JsMangleProgram * program,
-											  size_t tokenI,
-											  size_t maxEnd )
+static char jsMangleEnclosingClosePunctuation(
+	struct JsMangleProgram * program, size_t tokenI, size_t maxEnd
+)
 {
 	size_t openI = program->tokens[tokenI].enclosingOpen;
 	if (openI == SIZE_MAX) {
@@ -2678,11 +2672,10 @@ static char jsMangleEnclosingClosePunctuation( struct JsMangleProgram * program,
 }
 
 
-static bool
-jsMangleOpenBraceStartsObjectLiteral( const char * js,
-									 struct JsMangleProgram * program,
-									 size_t openTokenI,
-									 size_t minStart )
+static bool jsMangleOpenBraceStartsObjectLiteral(
+	const char * js, struct JsMangleProgram * program, size_t openTokenI,
+	size_t minStart
+)
 {
 	struct JsMangleToken * open = &program->tokens[openTokenI];
 	char previous = jsManglePreviousPunctuation(program, openTokenI, minStart);
@@ -2695,10 +2688,9 @@ jsMangleOpenBraceStartsObjectLiteral( const char * js,
 }
 
 
-static bool jsMangleInParameterBraces( const char * js,
-									  size_t paramsStart,
-									  size_t paramsEnd,
-									  size_t wordStart )
+static bool jsMangleInParameterBraces(
+	const char * js, size_t paramsStart, size_t paramsEnd, size_t wordStart
+)
 {
 	size_t open = wordStart;
 	size_t curly = 0;
@@ -2722,9 +2714,9 @@ static bool jsMangleInParameterBraces( const char * js,
 }
 
 
-static bool jsMangleTokenStartsAccessor( const char * js,
-										struct JsMangleProgram * program,
-										size_t tokenI )
+static bool jsMangleTokenStartsAccessor(
+	const char * js, struct JsMangleProgram * program, size_t tokenI
+)
 {
 	if (!jsMangleTokenEquals(js, &program->tokens[tokenI], "get")
 		&& !jsMangleTokenEquals(js, &program->tokens[tokenI], "set")) {
@@ -2742,15 +2734,17 @@ static bool jsMangleTokenStartsAccessor( const char * js,
 }
 
 
-static bool jsMangleIdentifierTokenEdit( const char * js,
-										struct JsMangleProgram * program,
-										size_t tokenI,
-										size_t start,
-										size_t end,
-										struct JsMangleState * state,
-										struct JsMangleBinding * bindings,
-										size_t bindingsLength,
-										bool global )
+static bool jsMangleIdentifierTokenEdit(
+	const char * js,
+	struct JsMangleProgram * program,
+	size_t tokenI,
+	size_t start,
+	size_t end,
+	struct JsMangleState * state,
+	struct JsMangleBinding * bindings,
+	size_t bindingsLength,
+	bool global
+)
 {
 	struct JsMangleToken * token = &program->tokens[tokenI];
 	if (token->start < start || token->start >= end
@@ -2834,12 +2828,11 @@ static bool jsMangleIdentifierTokenEdit( const char * js,
 }
 
 
-static bool jsMangleAddGlobalEdits( const char * js,
-								   size_t end,
-								   struct JsMangleProgram * program,
-								   struct JsMangleState * state,
-								   struct JsMangleBinding * bindings,
-								   size_t bindingsLength )
+static bool jsMangleAddGlobalEdits(
+	const char * js, size_t end, struct JsMangleProgram * program,
+	struct JsMangleState * state, struct JsMangleBinding * bindings,
+	size_t bindingsLength
+)
 {
 	bool success = false;
 	if (!jsMangleIndexBindings(program, bindings, bindingsLength)) {
@@ -2952,15 +2945,17 @@ done:
 }
 
 
-static bool jsMangleAddFunctionEdits( const char * js,
-									 size_t start,
-									 size_t end,
-									 size_t paramsStart,
-									 size_t paramsEnd,
-									 struct JsMangleProgram * program,
-									 struct JsMangleState * state,
-									 struct JsMangleBinding * bindings,
-									 size_t bindingsLength )
+static bool jsMangleAddFunctionEdits(
+	const char * js,
+	size_t start,
+	size_t end,
+	size_t paramsStart,
+	size_t paramsEnd,
+	struct JsMangleProgram * program,
+	struct JsMangleState * state,
+	struct JsMangleBinding * bindings,
+	size_t bindingsLength
+)
 {
 	bool success = false;
 	if (!jsMangleIndexBindings(program, bindings, bindingsLength)) {
@@ -3032,15 +3027,17 @@ done:
 }
 
 
-static bool jsMangleFunction( const char * js,
-							 size_t paramsStart,
-							 size_t paramsEnd,
-							 size_t bodyStart,
-							 size_t bodyEnd,
-							 size_t nameStart,
-							 size_t nameEnd,
-							 struct JsMangleProgram * program,
-							 struct JsMangleState * state )
+static bool jsMangleFunction(
+	const char * js,
+	size_t paramsStart,
+	size_t paramsEnd,
+	size_t bodyStart,
+	size_t bodyEnd,
+	size_t nameStart,
+	size_t nameEnd,
+	struct JsMangleProgram * program,
+	struct JsMangleState * state
+)
 {
 	if (jsMangleFunctionUnsafe(js, bodyStart, bodyEnd)) {
 		return (jsMangleAddUnsafeRange(state, bodyStart - 1, bodyEnd));
@@ -3119,7 +3116,9 @@ done:
 }
 
 
-static size_t jsMangleExpressionEnd( const char * js, size_t start, size_t end )
+static size_t jsMangleExpressionEnd(
+	const char * js, size_t start, size_t end
+)
 {
 	size_t roundNesting = 0;
 	size_t squareNesting = 0;
@@ -3148,14 +3147,16 @@ static size_t jsMangleExpressionEnd( const char * js, size_t start, size_t end )
 }
 
 
-static bool jsMangleArrow( const char * js,
-						  size_t paramsStart,
-						  size_t paramsEnd,
-						  size_t arrowI,
-						  size_t end,
-						  struct JsMangleProgram * program,
-						  struct JsMangleState * state,
-						  size_t * bodyEnd )
+static bool jsMangleArrow(
+	const char * js,
+	size_t paramsStart,
+	size_t paramsEnd,
+	size_t arrowI,
+	size_t end,
+	struct JsMangleProgram * program,
+	struct JsMangleState * state,
+	size_t * bodyEnd
+)
 {
 	size_t bodyStart = arrowI + 2;
 	while (bodyStart < end && IsWhitespace(js[bodyStart])) {

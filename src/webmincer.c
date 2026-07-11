@@ -13,7 +13,21 @@
 #include <string.h>
 
 static bool optionMangleOutput = false;
-static const char * const kVersion = "1.0";
+static const char * const VERSION = "1.0";
+
+struct Format {
+	const char * name;
+	struct Minification (* minify)( const char * );
+};
+
+
+static const struct Format FORMATS[] = {
+	{"js", MinifyJSWithOptions},
+	{"css", MinifyCSS},
+	{"xml", MinifyXML},
+	{"html", MinifyHTML},
+	{"json", MinifyJSON},
+};
 
 static const char * programName( const char * argv0 )
 {
@@ -27,7 +41,7 @@ static const char * programName( const char * argv0 )
 
 static void printVersion( FILE * stream )
 {
-	fprintf(stream, "%s\n", kVersion);
+	fprintf(stream, "%s\n", VERSION);
 }
 
 
@@ -65,7 +79,7 @@ static void printHelp( FILE * stream, const char * argv0 )
 		"Notes:\n"
 		"    Use '-' as the input file to read from standard input.\n",
 		name,
-		kVersion);
+		VERSION);
 }
 
 
@@ -112,7 +126,7 @@ static char * fileGetContent( const char * filename )
 }
 
 
-bool MangleOutputEnabled(  )
+bool MangleOutputEnabled( void )
 {
 	return (optionMangleOutput);
 }
@@ -123,7 +137,9 @@ struct LineColumn {
 	size_t column;
 };
 
-struct LineColumn positionToLineColumn( const char * text, size_t position )
+static struct LineColumn positionToLineColumn(
+	const char * text, size_t position
+)
 {
 	struct LineColumn lc = {.line = 1, .column = 0};
 	for (size_t i = 0; i <= position; ++i) {
@@ -141,18 +157,8 @@ struct LineColumn positionToLineColumn( const char * text, size_t position )
 int main( int argc, const char * argv[] )
 {
 	bool benchmark = false;
-	bool printUsage = false;
-	bool printUsageAsError = false;
 	const char * formatStr = NULL;
 	const char * inputFilename = NULL;
-
-	enum {
-		FORMAT_JS,
-		FORMAT_CSS,
-		FORMAT_XML,
-		FORMAT_HTML,
-		FORMAT_JSON
-	} format;
 
 	if (argc == 1) {
 		printHelp(stdout, argv[0]);
@@ -176,35 +182,24 @@ int main( int argc, const char * argv[] )
 		} else if (inputFilename == NULL) {
 			inputFilename = argv[i];
 		} else {
-			printUsage = true;
-			break;
+			printHelp(stderr, argv[0]);
+			return (EXIT_FAILURE);
 		}
 	}
 	if (formatStr == NULL || inputFilename == NULL) {
-		printUsage = true;
-		printUsageAsError = true;
-	} else if (!strcmp(formatStr, "js")) {
-		format = FORMAT_JS;
-	} else if (!strcmp(formatStr, "css")) {
-		format = FORMAT_CSS;
-	} else if (!strcmp(formatStr, "xml")) {
-		format = FORMAT_XML;
-	} else if (!strcmp(formatStr, "html")) {
-		format = FORMAT_HTML;
-	} else if (!strcmp(formatStr, "json")) {
-		format = FORMAT_JSON;
-	} else {
-		fprintf(stderr, "Unsupported input format: %s\n\n", formatStr);
-		printUsage = true;
-		printUsageAsError = true;
+		printHelp(stderr, argv[0]);
+		return (EXIT_FAILURE);
 	}
-
-	if (printUsage) {
-		printHelp(printUsageAsError ? stderr : stdout, argv[0]);
-		if (printUsageAsError) {
-			return (EXIT_FAILURE);
+	const struct Format * format = NULL;
+	for (size_t i = 0; i < sizeof FORMATS / sizeof *FORMATS; ++i)
+		if (!strcmp(formatStr, FORMATS[i].name)) {
+			format = &FORMATS[i];
+			break;
 		}
-		return (EXIT_SUCCESS);
+	if (format == NULL) {
+		fprintf(stderr, "Unsupported input format: %s\n\n", formatStr);
+		printHelp(stderr, argv[0]);
+		return (EXIT_FAILURE);
 	}
 
 	char * input = fileGetContent(inputFilename);
@@ -212,25 +207,7 @@ int main( int argc, const char * argv[] )
 		perror(inputFilename);
 		return (EXIT_FAILURE);
 	}
-	struct Minification m;
-	switch (format) {
-	case FORMAT_JS:
-		m = MinifyJSWithOptions(input);
-		break;
-	case FORMAT_CSS:
-		m = MinifyCSS(input);
-		break;
-	case FORMAT_XML:
-		m = MinifyXML(input);
-		break;
-	case FORMAT_HTML:
-		m = MinifyHTML(input);
-		break;
-	case FORMAT_JSON:
-	default:
-		m = MinifyJSON(input);
-		break;
-	}
+	struct Minification m = format->minify(input);
 	if (m.result == NULL) {
 		struct LineColumn lineColumn
 			= positionToLineColumn(input, m.errorPosition);

@@ -18,10 +18,8 @@ static char utf8Byte( uint_fast32_t byte )
 }
 
 static void xmlhtmlCorrectErrorPosition(
-	const char * encoded,
-	const char * decoded,
-	size_t * errorPosition,
-	bool isXml )
+	const char * encoded, size_t * errorPosition, bool isXml
+)
 {
 	size_t encodedI = 0, decodedI = 0;
 	bool inCdata = false;
@@ -109,8 +107,9 @@ static void xmlhtmlCorrectErrorPosition(
 }
 
 
-static struct Minification
-xmlhtmlDecode( const char * input, size_t length, bool isXml )
+static struct Minification xmlhtmlDecode(
+	const char * input, size_t length, bool isXml
+)
 {
 	// This function helps minify inline scripts and styles in XML (e.g. SVG,
 	// MathML, XHTML) documents. We need to decode XML entities and CDATA
@@ -299,12 +298,15 @@ error:
 	return (m);
 }
 
-static struct EncodedString {
+struct EncodedString {
 	char * data;
 	size_t length;
+};
 
-} xmlEncode( const char * input, const size_t inputLength )
 
+static struct EncodedString xmlEncode(
+	const char * input, const size_t inputLength
+)
 {
 	size_t addedLengthWithCdata = sizeof "<![CDATA[]]>" - 1;
 	size_t addedLengthWithEntities = 0;
@@ -344,7 +346,7 @@ static struct EncodedString {
 		for (i = 0; input[i] != '\0'; ++i) {
 			if (!strncmp(&input[i], "]]>", sizeof "]]>" - 1)) {
 				strcpy(&encoded.data[encoded.length], "]]]]><![CDATA[>");
-				encoded.length = sizeof "]]]]><![CDATA[>" - 1;
+				encoded.length += sizeof "]]]]><![CDATA[>" - 1;
 				i += 2;
 			} else {
 				encoded.data[encoded.length] = input[i];
@@ -352,11 +354,12 @@ static struct EncodedString {
 			}
 		}
 		strcpy(&encoded.data[encoded.length], "]]>");
-		encoded.length = sizeof "]]>" - 1;
+		encoded.length += sizeof "]]>" - 1;
+		encoded.data[encoded.length] = '\0';
 		return (encoded);
 	} else {
 		struct EncodedString encoded
-			= {malloc(inputLength + addedLengthWithCdata + 1), 0};
+			= {malloc(inputLength + addedLengthWithEntities + 1), 0};
 		if (encoded.data == NULL) {
 			return (encoded);
 		}
@@ -382,8 +385,9 @@ static struct EncodedString {
 }
 
 
-static bool
-ensureResultCapacity( char ** result, size_t * capacity, size_t neededLength )
+static bool ensureResultCapacity(
+	char ** result, size_t * capacity, size_t neededLength
+)
 {
 	if (neededLength + 1 <= *capacity) {
 		return (true);
@@ -402,9 +406,19 @@ ensureResultCapacity( char ** result, size_t * capacity, size_t neededLength )
 }
 
 
-static bool xmlhtmlIsEventHandlerAttribute( const char * attribute,
-										   size_t attributeLength,
-										   bool isXml )
+static void xmlhtmlCopyError(
+	struct Minification * destination, const struct Minification * source,
+	size_t positionOffset
+)
+{
+	destination->errorPosition = positionOffset + source->errorPosition;
+	memcpy(destination->error, source->error, sizeof destination->error);
+}
+
+
+static bool xmlhtmlIsEventHandlerAttribute(
+	const char * attribute, size_t attributeLength, bool isXml
+)
 {
 	if (isXml) {
 		return (false);
@@ -563,16 +577,16 @@ static struct Minification minifyJsHandler( const char * js )
 	return (m);
 }
 
-static struct EncodedAttribute {
+struct EncodedAttribute {
 	char * data;
 	size_t length;
 	char quote;
+};
 
-} xmlhtmlEncodeAttribute( const char * input,
-						 char preferredQuote,
-						 bool isXml,
-						 bool allowUnquoted )
 
+static struct EncodedAttribute xmlhtmlEncodeAttribute(
+	const char * input, char preferredQuote, bool isXml, bool allowUnquoted
+)
 {
 	size_t inputLength = strlen(input);
 	bool needQuotes = isXml || !allowUnquoted || inputLength == 0;
@@ -739,8 +753,8 @@ static struct Minification minifyXmlhtml( const char * xmlhtml, bool isXml )
 				}
 				if (!inCdata
 					&& !tagncmp(&xmlhtml[i],
-								tagContentDelimiter,
-								sizeof tagContentDelimiter - 1)) {
+							tagContentDelimiter,
+							strlen(tagContentDelimiter))) {
 					currentTagLength = 0;
 					break;
 				}
@@ -759,7 +773,7 @@ static struct Minification minifyXmlhtml( const char * xmlhtml, bool isXml )
 				inlineM = xmlhtmlDecode(
 					&xmlhtml[contentStartI], i - contentStartI, true);
 				if (inlineM.result == NULL) {
-					inlineM.errorPosition += contentStartI;
+					xmlhtmlCopyError(&m, &inlineM, contentStartI);
 					goto error;
 				}
 				char * inputToFree = inlineM.result;
@@ -767,10 +781,9 @@ static struct Minification minifyXmlhtml( const char * xmlhtml, bool isXml )
 				free(inputToFree);
 				if (inlineM.result == NULL) {
 					xmlhtmlCorrectErrorPosition(&xmlhtml[contentStartI],
-												inlineM.result,
-												&m.errorPosition,
-												isXml);
-					inlineM.errorPosition += contentStartI;
+						&inlineM.errorPosition,
+						isXml);
+					xmlhtmlCopyError(&m, &inlineM, contentStartI);
 					goto error;
 				}
 				struct EncodedString encoded
@@ -800,7 +813,7 @@ static struct Minification minifyXmlhtml( const char * xmlhtml, bool isXml )
 				inlineM = tagContentMinifyCallback(tagContent);
 				free(tagContent);
 				if (inlineM.result == NULL) {
-					inlineM.errorPosition += contentStartI;
+					xmlhtmlCopyError(&m, &inlineM, contentStartI);
 					goto error;
 				}
 			}
@@ -866,6 +879,14 @@ static struct Minification minifyXmlhtml( const char * xmlhtml, bool isXml )
 			resultLength += sizeof "<![CDATA[" - 1;
 			i += sizeof "<![CDATA[" - 1;
 			while (true) {
+				if (xmlhtml[i] == '\0') {
+					m.errorPosition = i;
+					snprintf(m.error,
+						sizeof m.error,
+						"Unclosed CDATA section before line %%zu, column "
+						"%%zu\n");
+					goto error;
+				}
 				if (!strncmp(&xmlhtml[i], "]]>", sizeof "]]>" - 1)) {
 					memcpy(&m.result[resultLength], "]]>", sizeof "]]>" - 1);
 					resultLength += sizeof "]]>" - 1;
@@ -1187,7 +1208,7 @@ static struct Minification minifyXmlhtml( const char * xmlhtml, bool isXml )
 						size_t errorPosition = minifiedJs.errorPosition;
 						size_t valueOffset = (size_t)(value - xmlhtml);
 						xmlhtmlCorrectErrorPosition(
-							value, decodedValue.result, &errorPosition, false);
+							value, &errorPosition, false);
 						m.errorPosition = valueOffset + errorPosition;
 						strncpy(m.error, minifiedJs.error, sizeof m.error);
 						m.error[sizeof m.error - 1] = '\0';
@@ -1232,7 +1253,7 @@ static struct Minification minifyXmlhtml( const char * xmlhtml, bool isXml )
 							= sizeof "javascript:" - 1 + minifiedJs.errorPosition;
 						size_t valueOffset = (size_t)(value - xmlhtml);
 						xmlhtmlCorrectErrorPosition(
-							value, decodedValue.result, &errorPosition, false);
+							value, &errorPosition, false);
 						m.errorPosition = valueOffset + errorPosition;
 						strncpy(m.error, minifiedJs.error, sizeof m.error);
 						m.error[sizeof m.error - 1] = '\0';

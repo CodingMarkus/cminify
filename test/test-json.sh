@@ -19,4 +19,8 @@ input=' { "false": false, "true": true } '
 expected='{"false":false,"true":true}'
 assert "$expected" "$input"
 
+input=' false '
+expected='false'
+assert "$expected" "$input"
+
 printf 'Passed all tests\n'

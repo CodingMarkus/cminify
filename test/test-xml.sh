@@ -31,6 +31,10 @@ input='<script><![CDATA[ let a = "</script>" ]]></script>'
 expected='<script>let a="&lt;/script&gt;"</script>'
 assert "$expected" "$input"
 
+input='<script>"<<<<<<"</script>'
+expected='<script><![CDATA["<<<<<<"]]></script>'
+assert "$expected" "$input"
+
 input='<style> * { font-weight : bold ; } </style>'
 expected='<style>*{font-weight:bold}</style>'
 assert "$expected" "$input"
