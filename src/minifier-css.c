@@ -17,6 +17,18 @@ struct Color {
 	const char * hex;
 };
 
+struct IntegerUnitConversion {
+	const char * sourceUnit;
+	size_t divisor;
+	const char * targetUnit;
+};
+
+struct DecimalUnitConversion {
+	const char * sourceUnit;
+	size_t divisor;
+	size_t decimalPlaces;
+};
+
 
 static const struct Color CSS_COLORS[] = {
 		{"black", "000000"},
@@ -169,6 +181,22 @@ static const struct Color CSS_COLORS[] = {
 		{"yellowgreen", "9acd32"},
 };
 
+static const struct IntegerUnitConversion INTEGER_UNIT_CONVERSIONS[] = {
+		{"hz", 1000, "kHz"},
+		{"khz", 1000, "MHz"},
+		{"deg", 360, "turn"},
+		{"grad", 400, "turn"},
+		{"px", 96, "in"},
+		{"pt", 72, "in"},
+		{"pc", 6, "in"},
+		{"dpi", 96, "dppx"},
+};
+
+static const struct DecimalUnitConversion DECIMAL_UNIT_CONVERSIONS[] = {
+		{"cm", 254, 2},
+		{"mm", 254, 1},
+};
+
 
 static bool isHexadecimalDigit( const char c )
 {
@@ -281,10 +309,12 @@ static const char * shorterColorName( const char * color, size_t colorLength )
 }
 
 
-static size_t minifyHexColor( const char * css,
-							  size_t i,
-							  char * result,
-							  size_t * resultLength )
+static size_t minifyHexColor(
+	const char * css,
+	size_t i,
+	char * result,
+	size_t * resultLength
+)
 {
 	size_t colorLength = 0;
 	while (isHexadecimalDigit(css[i + 1 + colorLength])) {
@@ -317,10 +347,12 @@ static size_t minifyHexColor( const char * css,
 }
 
 
-static size_t minifyColorName( const char * css,
-							   size_t i,
-							   char * result,
-							   size_t * resultLength )
+static size_t minifyColorName(
+	const char * css,
+	size_t i,
+	char * result,
+	size_t * resultLength
+)
 {
 	size_t inputLength = 0;
 	while (isIdentifierCharacter(css[i + inputLength])) {
@@ -350,6 +382,269 @@ static size_t minifyColorName( const char * css,
 		return (inputLength);
 	}
 	return (0);
+}
+
+
+static bool matchesUnit(
+	const char * css,
+	size_t i,
+	const char * unit
+)
+{
+	for (size_t unitI = 0; unit[unitI] != '\0'; unitI += 1) {
+		if (tolower((unsigned char) css[i + unitI]) != unit[unitI]) {
+			return (false);
+		}
+	}
+	return (!isIdentifierCharacter(css[i + strlen(unit)])
+		&& css[i + strlen(unit)] != '\\');
+}
+
+
+static size_t minifyIntegerUnit(
+	const char * css,
+	size_t i,
+	const char * sourceUnit,
+	size_t divisor,
+	const char * targetUnit,
+	char * result,
+	size_t * resultLength
+)
+{
+	if (i != 0 && isdigit(css[i - 1])) {
+		return (0);
+	}
+	size_t end = i;
+	while (isdigit(css[end])) {
+		end += 1;
+	}
+	if (!matchesUnit(css, end, sourceUnit)) {
+		return (0);
+	}
+
+	size_t remainder = 0;
+	size_t quotientLength = 0;
+	bool hasQuotientDigit = false;
+	for (size_t digitI = i; digitI < end; digitI += 1) {
+		remainder = remainder * 10 + (size_t) (css[digitI] - '0');
+		size_t quotientDigit = remainder / divisor;
+		remainder %= divisor;
+		if (quotientDigit != 0 || hasQuotientDigit) {
+			hasQuotientDigit = true;
+			quotientLength += 1;
+		}
+	}
+	if (remainder != 0) {
+		return (0);
+	}
+	if (!hasQuotientDigit) {
+		quotientLength = 1;
+	}
+	size_t sourceLength = end - i + strlen(sourceUnit);
+	if (quotientLength + strlen(targetUnit) >= sourceLength) {
+		return (0);
+	}
+
+	remainder = 0;
+	hasQuotientDigit = false;
+	for (size_t digitI = i; digitI < end; digitI += 1) {
+		remainder = remainder * 10 + (size_t) (css[digitI] - '0');
+		size_t quotientDigit = remainder / divisor;
+		remainder %= divisor;
+		if (quotientDigit != 0 || hasQuotientDigit) {
+			hasQuotientDigit = true;
+			result[(*resultLength)++] = (char) ('0' + quotientDigit);
+		}
+	}
+	if (!hasQuotientDigit) {
+		result[(*resultLength)++] = '0';
+	}
+	memcpy(&result[*resultLength], targetUnit, strlen(targetUnit));
+	*resultLength += strlen(targetUnit);
+	return (sourceLength);
+}
+
+
+static size_t minifyDecimalUnitToInteger(
+	const char * css,
+	size_t i,
+	const char * sourceUnit,
+	size_t divisor,
+	size_t decimalPlaces,
+	const char * targetUnit,
+	char * result,
+	size_t * resultLength
+)
+{
+	if (i != 0 && isdigit(css[i - 1])) {
+		return (0);
+	}
+	size_t dotI = i;
+	while (isdigit(css[dotI])) {
+		dotI += 1;
+	}
+	if (css[dotI] != '.') {
+		return (0);
+	}
+	size_t end = dotI + 1;
+	while (isdigit(css[end])) {
+		end += 1;
+	}
+	if (end == dotI + 1 || !matchesUnit(css, end, sourceUnit)) {
+		return (0);
+	}
+
+	size_t fractionalLength = end - dotI - 1;
+	while (fractionalLength != 0
+		&& css[dotI + fractionalLength] == '0') {
+		fractionalLength -= 1;
+	}
+	if (fractionalLength > decimalPlaces) {
+		return (0);
+	}
+
+	size_t remainder = 0;
+	size_t quotientLength = 0;
+	bool hasQuotientDigit = false;
+	for (size_t digitI = i; digitI < dotI + fractionalLength + 1;
+		 digitI += 1) {
+		if (digitI == dotI) {
+			continue;
+		}
+		remainder = remainder * 10 + (size_t) (css[digitI] - '0');
+		size_t quotientDigit = remainder / divisor;
+		remainder %= divisor;
+		if (quotientDigit != 0 || hasQuotientDigit) {
+			hasQuotientDigit = true;
+			quotientLength += 1;
+		}
+	}
+	for (size_t zeroI = fractionalLength; zeroI < decimalPlaces;
+		 zeroI += 1) {
+		remainder *= 10;
+		size_t quotientDigit = remainder / divisor;
+		remainder %= divisor;
+		if (quotientDigit != 0 || hasQuotientDigit) {
+			hasQuotientDigit = true;
+			quotientLength += 1;
+		}
+	}
+	if (remainder != 0) {
+		return (0);
+	}
+	if (!hasQuotientDigit) {
+		quotientLength = 1;
+	}
+	size_t sourceLength = end - i + strlen(sourceUnit);
+	if (quotientLength + strlen(targetUnit) >= sourceLength) {
+		return (0);
+	}
+
+	remainder = 0;
+	hasQuotientDigit = false;
+	for (size_t digitI = i; digitI < dotI + fractionalLength + 1;
+		 digitI += 1) {
+		if (digitI == dotI) {
+			continue;
+		}
+		remainder = remainder * 10 + (size_t) (css[digitI] - '0');
+		size_t quotientDigit = remainder / divisor;
+		remainder %= divisor;
+		if (quotientDigit != 0 || hasQuotientDigit) {
+			hasQuotientDigit = true;
+			result[(*resultLength)++] = (char) ('0' + quotientDigit);
+		}
+	}
+	for (size_t zeroI = fractionalLength; zeroI < decimalPlaces;
+		 zeroI += 1) {
+		remainder *= 10;
+		size_t quotientDigit = remainder / divisor;
+		remainder %= divisor;
+		if (quotientDigit != 0 || hasQuotientDigit) {
+			hasQuotientDigit = true;
+			result[(*resultLength)++] = (char) ('0' + quotientDigit);
+		}
+	}
+	if (!hasQuotientDigit) {
+		result[(*resultLength)++] = '0';
+	}
+	memcpy(&result[*resultLength], targetUnit, strlen(targetUnit));
+	*resultLength += strlen(targetUnit);
+	return (sourceLength);
+}
+
+
+static size_t minifyMilliseconds(
+	const char * css,
+	size_t i,
+	char * result,
+	size_t * resultLength
+)
+{
+	if (i != 0 && isdigit(css[i - 1])) {
+		return (0);
+	}
+	size_t end = i;
+	while (isdigit(css[end])) {
+		end += 1;
+	}
+	if (!matchesUnit(css, end, "ms")) {
+		return (0);
+	}
+
+	size_t firstNonzero = i;
+	while (css[firstNonzero] == '0') {
+		firstNonzero += 1;
+	}
+	if (firstNonzero == end) {
+		if (end + 2 - i <= sizeof "0s" - 1) {
+			return (0);
+		}
+		memcpy(&result[*resultLength], "0s", sizeof "0s" - 1);
+		*resultLength += sizeof "0s" - 1;
+		return (end + 2 - i);
+	}
+
+	size_t significantLength = end - firstNonzero;
+	size_t trailingZeros = 0;
+	while (trailingZeros < 3
+		&& css[end - 1 - trailingZeros] == '0') {
+		trailingZeros += 1;
+	}
+	size_t integerLength
+		= significantLength > 3 ? significantLength - 3 : 0;
+	size_t fractionalLength = 3 - trailingZeros;
+	size_t leadingFractionalZeros
+		= significantLength < 3 ? 3 - significantLength : 0;
+	size_t fractionalSourceLength = significantLength < 3
+									 ? significantLength - trailingZeros
+									 : fractionalLength;
+	size_t outputLength = integerLength + sizeof "s" - 1;
+	if (fractionalLength != 0) {
+		outputLength += sizeof "." - 1 + fractionalLength;
+	}
+	if (outputLength >= end + 2 - i) {
+		return (0);
+	}
+
+	if (integerLength != 0) {
+		memcpy(&result[*resultLength], &css[firstNonzero], integerLength);
+		*resultLength += integerLength;
+	}
+	if (fractionalLength != 0) {
+		result[(*resultLength)++] = '.';
+		for (size_t zeroI = 0; zeroI < leadingFractionalZeros;
+			 zeroI += 1) {
+			result[(*resultLength)++] = '0';
+		}
+		size_t fractionStart = firstNonzero + integerLength;
+		memcpy(&result[*resultLength],
+			   &css[fractionStart],
+			   fractionalSourceLength);
+		*resultLength += fractionalSourceLength;
+	}
+	result[(*resultLength)++] = 's';
+	return (end + 2 - i);
 }
 
 
@@ -622,6 +917,57 @@ struct Minification MinifyCSS( const char * css )
 			i += 1;
 			continue;
 		}
+		if (syntaxBlock == SYNTAX_BLOCK_STYLE && isdigit(css[i])) {
+			bool minifiedValue = false;
+			size_t timeLength
+				= minifyMilliseconds(css, i, m.result, &resultLength);
+			if (timeLength != 0) {
+				i += timeLength;
+				continue;
+			}
+			for (size_t conversionI = 0;
+				 conversionI < sizeof INTEGER_UNIT_CONVERSIONS
+							   / sizeof *INTEGER_UNIT_CONVERSIONS;
+				 conversionI += 1) {
+				size_t conversionLength = minifyIntegerUnit(
+					css,
+					i,
+					INTEGER_UNIT_CONVERSIONS[conversionI].sourceUnit,
+					INTEGER_UNIT_CONVERSIONS[conversionI].divisor,
+					INTEGER_UNIT_CONVERSIONS[conversionI].targetUnit,
+					m.result,
+					&resultLength);
+				if (conversionLength != 0) {
+					i += conversionLength;
+					minifiedValue = true;
+					break;
+				}
+			}
+			if (!minifiedValue) {
+				for (size_t conversionI = 0;
+					 conversionI < sizeof DECIMAL_UNIT_CONVERSIONS
+								   / sizeof *DECIMAL_UNIT_CONVERSIONS;
+					 conversionI += 1) {
+					size_t conversionLength = minifyDecimalUnitToInteger(
+						css,
+						i,
+						DECIMAL_UNIT_CONVERSIONS[conversionI].sourceUnit,
+						DECIMAL_UNIT_CONVERSIONS[conversionI].divisor,
+						DECIMAL_UNIT_CONVERSIONS[conversionI].decimalPlaces,
+						"in",
+						m.result,
+						&resultLength);
+					if (conversionLength != 0) {
+						i += conversionLength;
+						minifiedValue = true;
+						break;
+					}
+				}
+			}
+			if (minifiedValue) {
+				continue;
+			}
+		}
 		if (css[i] == '#' && syntaxBlock == SYNTAX_BLOCK_STYLE
 			&& isColorProperty(m.result, resultLength)) {
 			size_t colorLength
@@ -744,8 +1090,10 @@ struct Minification MinifyCSS( const char * css )
 			}
 			continue;
 		}
+
 		m.result[resultLength++] = css[i];
 		i += 1;
+
 	}
 	return (m);
 

@@ -55,6 +55,18 @@ input='@page :left { }'
 expected='@page :left{}'
 assert "$expected" "$input"
 
+input='a{animation:0ms 1ms 10ms 100ms 250ms 500ms 750MS 1000ms -1500ms;'
+input="${input}transition-delay:000ms}"
+expected='a{animation:0s 1ms 10ms .1s .25s .5s .75s 1s -1.5s;'
+expected="${expected}transition-delay:0s}"
+assert "$expected" "$input"
+
+input='a[foo=1000Hz]{b:1000HZ 1000kHz 360deg 400grad 96px 72pt 12pc;'
+input="${input}192dpi -192dpi 2.54cm 5.080cm 25.4mm}"
+expected='a[foo=1000Hz]{b:1kHz 1MHz 1turn 1turn 1in 1in 2in;'
+expected="${expected}2dppx -2dppx 1in 2in 1in}"
+assert "$expected" "$input"
+
 input='a\{b{}'
 expected='a\{b{}'
 assert "$expected" "$input"
