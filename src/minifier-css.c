@@ -199,12 +199,13 @@ static bool isColorProperty( const char * result, size_t resultLength )
 		&& property[-1] != ';') {
 		property -= 1;
 	}
+	size_t propertySpan = (size_t)(&result[resultLength] - property);
 	const char * colon = memchr(
-		property, ':', &result[resultLength] - property);
+		property, ':', propertySpan);
 	if (colon == NULL || property[0] == '-') {
 		return (false);
 	}
-	const size_t propertyLength = colon - property;
+	const size_t propertyLength = (size_t)(colon - property);
 	return ((propertyLength == sizeof "color" - 1
 			&& !StrNICmp(property, "color", propertyLength))
 		|| (propertyLength == sizeof "background" - 1

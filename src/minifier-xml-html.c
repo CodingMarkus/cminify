@@ -8,8 +8,14 @@
 #include "minifier.h"
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
+static char utf8Byte( uint_fast32_t byte )
+{
+	return ((char)(unsigned char)byte);
+}
 
 static void xmlhtmlCorrectErrorPosition(
 	const char * encoded,
@@ -176,35 +182,38 @@ xmlhtmlDecode( const char * input, size_t length, bool isXml )
 			}
 			if (input[i] == '&' && input[i + 1] == '#') {
 				uint_fast32_t codepoint = 0;
+				bool validCodepoint = true;
 				size_t k;
 				if (input[i + 2] == 'x' || (!isXml && input[i + 2] == 'X')) {
 					for (k = 3; input[i + k] != ';'; ++k) {
 						if (input[i + k] >= '0' && input[i + k] <= '9') {
-							codepoint = codepoint * 16 + (input[i + k] - '0');
+							codepoint = codepoint * 16
+								+ (uint_fast32_t)(input[i + k] - '0');
 						} else if (input[i + k] >= 'A'
 								   && input[i + k] <= 'F') {
-							codepoint
-								= codepoint * 16 + (10 + input[i + k] - 'A');
+							codepoint = codepoint * 16
+								+ (uint_fast32_t)(10 + input[i + k] - 'A');
 						} else if (input[i + k] >= 'a'
 								   && input[i + k] <= 'f') {
-							codepoint
-								= codepoint * 16 + (10 + input[i + k] - 'a');
+							codepoint = codepoint * 16
+								+ (uint_fast32_t)(10 + input[i + k] - 'a');
 						} else {
-							codepoint = -1;
+							validCodepoint = false;
 							break;
 						}
 					}
 				} else {
 					for (k = 2; input[i + k] != ';'; ++k) {
 						if (input[i + k] >= '0' && input[i + k] <= '9') {
-							codepoint = codepoint * 10 + (input[i + k] - '0');
+							codepoint = codepoint * 10
+								+ (uint_fast32_t)(input[i + k] - '0');
 						} else {
-							codepoint = -1;
+							validCodepoint = false;
 							break;
 						}
 					}
 				}
-				if (codepoint > 0x7FFFFFFF) {
+				if (!validCodepoint || codepoint > UINT32_C(0x7FFFFFFF)) {
 					m.errorPosition = i;
 					snprintf(m.error,
 							 sizeof m.error,
@@ -217,49 +226,54 @@ xmlhtmlDecode( const char * input, size_t length, bool isXml )
 
 				// See `man utf-8`
 
-				if (codepoint <= 0x7F) {
-					m.result[resultLength++] = codepoint;
-				} else if (codepoint <= 0x7FF) {
-					m.result[resultLength++] = 0b11000000 + (codepoint >> 6);
-					m.result[resultLength++]
-						= (10 << 6) + (codepoint & 0b111111);
-				} else if (codepoint <= 0xFFFF) {
-					m.result[resultLength++] = 0b11100000 + (codepoint >> 12);
-					m.result[resultLength++]
-						= (10 << 6) + ((codepoint >> 6) & 0b111111);
-					m.result[resultLength++]
-						= (10 << 6) + (codepoint & 0b111111);
-				} else if (codepoint <= 0x1FFFFF) {
-					m.result[resultLength++] = 0b11110000 + (codepoint >> 18);
-					m.result[resultLength++]
-						= (10 << 6) + ((codepoint >> 12) & 0b111111);
-					m.result[resultLength++]
-						= (10 << 6) + ((codepoint >> 6) & 0b111111);
-					m.result[resultLength++]
-						= (10 << 6) + (codepoint & 0b111111);
-				} else if (codepoint <= 0x03FFFFFF) {
-					m.result[resultLength++] = 0b11111000 + (codepoint >> 24);
-					m.result[resultLength++]
-						= (10 << 6) + ((codepoint >> 18) & 0b111111);
-					m.result[resultLength++]
-						= (10 << 6) + ((codepoint >> 12) & 0b111111);
-					m.result[resultLength++]
-						= (10 << 6) + ((codepoint >> 6) & 0b111111);
-					m.result[resultLength++]
-						= (10 << 6) + (codepoint & 0b111111);
-				} else if (codepoint <= 0x7FFFFFFF) {
-					m.result[resultLength++] = 0b1111110 + (codepoint >> 30);
-					m.result[resultLength++]
-						= (10 << 6) + ((codepoint >> 24) & 0b111111);
-					m.result[resultLength++]
-						= (10 << 6) + ((codepoint >> 18) & 0b111111);
-					m.result[resultLength++]
-						= (10 << 6) + ((codepoint >> 12) & 0b111111);
-					m.result[resultLength++]
-						= (10 << 6) + ((codepoint >> 6) & 0b111111);
-					m.result[resultLength++]
-						= (10 << 6) + (codepoint & 0b111111);
-				}
+					if (codepoint <= 0x7F) {
+						m.result[resultLength++] = utf8Byte(codepoint);
+					} else if (codepoint <= 0x7FF) {
+						m.result[resultLength++] =
+							utf8Byte(0xC0u + (codepoint >> 6));
+						m.result[resultLength++] =
+							utf8Byte(0x80u + (codepoint & 0x3Fu));
+					} else if (codepoint <= 0xFFFF) {
+						m.result[resultLength++] =
+							utf8Byte(0xE0u + (codepoint >> 12));
+						m.result[resultLength++] =
+							utf8Byte(0x80u + ((codepoint >> 6) & 0x3Fu));
+						m.result[resultLength++] =
+							utf8Byte(0x80u + (codepoint & 0x3Fu));
+					} else if (codepoint <= 0x1FFFFF) {
+						m.result[resultLength++] =
+							utf8Byte(0xF0u + (codepoint >> 18));
+						m.result[resultLength++] =
+							utf8Byte(0x80u + ((codepoint >> 12) & 0x3Fu));
+						m.result[resultLength++] =
+							utf8Byte(0x80u + ((codepoint >> 6) & 0x3Fu));
+						m.result[resultLength++] =
+							utf8Byte(0x80u + (codepoint & 0x3Fu));
+					} else if (codepoint <= 0x03FFFFFF) {
+						m.result[resultLength++] =
+							utf8Byte(0xF8u + (codepoint >> 24));
+						m.result[resultLength++] =
+							utf8Byte(0x80u + ((codepoint >> 18) & 0x3Fu));
+						m.result[resultLength++] =
+							utf8Byte(0x80u + ((codepoint >> 12) & 0x3Fu));
+						m.result[resultLength++] =
+							utf8Byte(0x80u + ((codepoint >> 6) & 0x3Fu));
+						m.result[resultLength++] =
+							utf8Byte(0x80u + (codepoint & 0x3Fu));
+					} else if (codepoint <= 0x7FFFFFFF) {
+						m.result[resultLength++] =
+							utf8Byte(0xFCu + (codepoint >> 30));
+						m.result[resultLength++] =
+							utf8Byte(0x80u + ((codepoint >> 24) & 0x3Fu));
+						m.result[resultLength++] =
+							utf8Byte(0x80u + ((codepoint >> 18) & 0x3Fu));
+						m.result[resultLength++] =
+							utf8Byte(0x80u + ((codepoint >> 12) & 0x3Fu));
+						m.result[resultLength++] =
+							utf8Byte(0x80u + ((codepoint >> 6) & 0x3Fu));
+						m.result[resultLength++] =
+							utf8Byte(0x80u + (codepoint & 0x3Fu));
+					}
 				continue;
 			}
 			if (isXml && input[i] == '&') {
@@ -1169,14 +1183,15 @@ static struct Minification minifyXmlhtml( const char * xmlhtml, bool isXml )
 				copyRawValue = false;
 				struct Minification minifiedJs
 					= minifyJsHandler(decodedValue.result);
-				if (minifiedJs.result == NULL) {
-					size_t errorPosition = minifiedJs.errorPosition;
-					xmlhtmlCorrectErrorPosition(
-						value, decodedValue.result, &errorPosition, false);
-					m.errorPosition = value - xmlhtml + errorPosition;
-					strncpy(m.error, minifiedJs.error, sizeof m.error);
-					m.error[sizeof m.error - 1] = '\0';
-					free(decodedValue.result);
+					if (minifiedJs.result == NULL) {
+						size_t errorPosition = minifiedJs.errorPosition;
+						size_t valueOffset = (size_t)(value - xmlhtml);
+						xmlhtmlCorrectErrorPosition(
+							value, decodedValue.result, &errorPosition, false);
+						m.errorPosition = valueOffset + errorPosition;
+						strncpy(m.error, minifiedJs.error, sizeof m.error);
+						m.error[sizeof m.error - 1] = '\0';
+						free(decodedValue.result);
 					goto error;
 				}
 				struct EncodedAttribute encodedValue = xmlhtmlEncodeAttribute(
@@ -1212,15 +1227,16 @@ static struct Minification minifyXmlhtml( const char * xmlhtml, bool isXml )
 				copyRawValue = false;
 				struct Minification minifiedJs
 					= MinifyJS(&decodedValue.result[sizeof "javascript:" - 1]);
-				if (minifiedJs.result == NULL) {
-					size_t errorPosition
-						= sizeof "javascript:" - 1 + minifiedJs.errorPosition;
-					xmlhtmlCorrectErrorPosition(
-						value, decodedValue.result, &errorPosition, false);
-					m.errorPosition = value - xmlhtml + errorPosition;
-					strncpy(m.error, minifiedJs.error, sizeof m.error);
-					m.error[sizeof m.error - 1] = '\0';
-					free(decodedValue.result);
+					if (minifiedJs.result == NULL) {
+						size_t errorPosition
+							= sizeof "javascript:" - 1 + minifiedJs.errorPosition;
+						size_t valueOffset = (size_t)(value - xmlhtml);
+						xmlhtmlCorrectErrorPosition(
+							value, decodedValue.result, &errorPosition, false);
+						m.errorPosition = valueOffset + errorPosition;
+						strncpy(m.error, minifiedJs.error, sizeof m.error);
+						m.error[sizeof m.error - 1] = '\0';
+						free(decodedValue.result);
 					goto error;
 				}
 				size_t minifiedJsLength = strlen(minifiedJs.result);

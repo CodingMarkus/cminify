@@ -60,16 +60,18 @@ bool SkipWhitespacesComments( struct Minification * m,
 		} else {
 			break;
 		}
-		if (preservedComment != NULL) {
-			skippedAllComments = false;
-			if (min != NULL) {
-				memcpy(&min[*minLength],
-					   preservedComment,
-					   &input[*i] - preservedComment);
-				*minLength += &input[*i] - preservedComment;
+			if (preservedComment != NULL) {
+				skippedAllComments = false;
+				if (min != NULL) {
+					size_t preservedCommentLength =
+						(size_t)(&input[*i] - preservedComment);
+					memcpy(&min[*minLength],
+						   preservedComment,
+						   preservedCommentLength);
+					*minLength += preservedCommentLength;
+				}
 			}
-		}
-	} while (true);
+		} while (true);
 	return (skippedAllComments);
 }
 

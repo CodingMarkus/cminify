@@ -1,6 +1,12 @@
 CC ?= cc
 
-BASE_CFLAGS ?= -Werror -Wall -Wextra -Wno-unused-parameter
+BASE_CFLAGS ?= \
+	-Werror \
+	-Wall \
+	-Wextra \
+	-Wno-unused-parameter \
+	-Wconversion \
+	-Wsign-conversion
 BUILD_CFLAGS ?= -O2 -g
 DEBUG_CFLAGS ?= -O0 -g
 
