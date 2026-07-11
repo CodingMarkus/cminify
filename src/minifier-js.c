@@ -808,7 +808,7 @@ struct Minification MinifyJSWithOptions( const char * js )
 {
 	struct Minification m = MinifyJS(js);
 
-	if (m.result != NULL && MangleJSIdentifiersEnabled()) {
+	if (m.result != NULL && MangleOutputEnabled()) {
 		struct Minification mangled = MangleJSIdentifiers(m.result, false);
 		free(m.result);
 		m = mangled;
@@ -822,7 +822,7 @@ struct Minification MinifyJSModuleWithOptions( const char * js )
 {
 	struct Minification m = MinifyJS(js);
 
-	if (m.result != NULL && MangleJSIdentifiersEnabled()) {
+	if (m.result != NULL && MangleOutputEnabled()) {
 		const char * moduleMarker = "import\"\";";
 		size_t moduleMarkerLength = strlen(moduleMarker);
 		size_t resultLength = strlen(m.result);

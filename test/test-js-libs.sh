@@ -104,7 +104,7 @@ _testFile( )
 	printf '%s (%s):\n   ' "$_tf_file" "$_tf_mode"
 	if [ "$_tf_mode" = "mangled" ]
 	then
-		"$binaryPath" js "$_tf_file" --mangle-js-identifiers \
+		"$binaryPath" js "$_tf_file" --mangle \
 			> "$_tf_outputFile" || return 1
 	else
 		"$binaryPath" js "$_tf_file" > "$_tf_outputFile" || return 1

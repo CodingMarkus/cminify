@@ -134,7 +134,7 @@ Implementation and validation
 
 The implementation can be developed in this order:
 
-1. Add the CLI flag and pass wiring, initially with the mangler disabled internally.
+1. Add the CLI flag and pass wiring, initially with the mangler disabled internally. The current flag name is `--mangle`.
 2. Add count-pass data structures and the counting scan.
 3. Add collection of scopes, declarations, and references.
 4. Support ordinary declarations and references.

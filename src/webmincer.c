@@ -12,7 +12,62 @@
 #include <stdlib.h>
 #include <string.h>
 
-static bool optionMangleJSIdentifiers = false;
+static bool optionMangleOutput = false;
+static const char * const kVersion = "1.0";
+
+static const char * programName( const char * argv0 )
+{
+	const char * lastSlash = strrchr(argv0, '/');
+	if (lastSlash == NULL) {
+		return (argv0);
+	}
+	return (lastSlash + 1);
+}
+
+
+static void printVersion( FILE * stream )
+{
+	fprintf(stream, "%s\n", kVersion);
+}
+
+
+static void printHelp( FILE * stream, const char * argv0 )
+{
+	const char * name = programName(argv0);
+
+	fprintf(
+		stream,
+		"\n"
+		"Usage:\n"
+		"    %s <format> <input-file|-> [options]\n"
+		"\n\n"
+		"Formats:\n"
+		"    css    Minify CSS input.\n"
+		"    js     Minify JavaScript input.\n"
+		"    xml    Minify XML input.\n"
+		"    html   Minify HTML input.\n"
+		"    json   Minify JSON input.\n"
+		"\n\n"
+		"Options:\n"
+		"    -h, -help, --help       Show this help page.\n"
+		"\n"
+		"    --benchmark             Print size reduction statistics.\n"
+		"\n"
+		"    --mangle                Enable output mangling.\n"
+		"\n"
+		"                            Currently only JavaScript code is\n"
+		"                            mangled, so this has no effect unless\n"
+		"                            the format is js or the input is HTML\n"
+		"                            with embedded JavaScript.\n"
+		"\n"
+		"    --version               Print version %s.\n"
+		"\n\n"
+		"Notes:\n"
+		"    Use '-' as the input file to read from standard input.\n",
+		name,
+		kVersion);
+}
+
 
 static char * fileGetContent( const char * filename )
 {
@@ -57,10 +112,11 @@ static char * fileGetContent( const char * filename )
 }
 
 
-bool MangleJSIdentifiersEnabled(  )
+bool MangleOutputEnabled(  )
 {
-	return (optionMangleJSIdentifiers);
+	return (optionMangleOutput);
 }
+
 
 struct LineColumn {
 	size_t line;
@@ -86,6 +142,7 @@ int main( int argc, const char * argv[] )
 {
 	bool benchmark = false;
 	bool printUsage = false;
+	bool printUsageAsError = false;
 	const char * formatStr = NULL;
 	const char * inputFilename = NULL;
 
@@ -97,11 +154,23 @@ int main( int argc, const char * argv[] )
 		FORMAT_JSON
 	} format;
 
+	if (argc == 1) {
+		printHelp(stdout, argv[0]);
+		return (EXIT_SUCCESS);
+	}
+
 	for (int i = 1; i < argc; ++i) {
 		if (!strcmp(argv[i], "--benchmark")) {
 			benchmark = true;
-		} else if (!strcmp(argv[i], "--mangle-js-identifiers")) {
-			optionMangleJSIdentifiers = true;
+		} else if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "-help")
+			   || !strcmp(argv[i], "--help")) {
+			printHelp(stdout, argv[0]);
+			return (EXIT_SUCCESS);
+		} else if (!strcmp(argv[i], "--version")) {
+			printVersion(stdout);
+			return (EXIT_SUCCESS);
+		} else if (!strcmp(argv[i], "--mangle")) {
+			optionMangleOutput = true;
 		} else if (formatStr == NULL) {
 			formatStr = argv[i];
 		} else if (inputFilename == NULL) {
@@ -113,6 +182,7 @@ int main( int argc, const char * argv[] )
 	}
 	if (formatStr == NULL || inputFilename == NULL) {
 		printUsage = true;
+		printUsageAsError = true;
 	} else if (!strcmp(formatStr, "js")) {
 		format = FORMAT_JS;
 	} else if (!strcmp(formatStr, "css")) {
@@ -124,17 +194,17 @@ int main( int argc, const char * argv[] )
 	} else if (!strcmp(formatStr, "json")) {
 		format = FORMAT_JSON;
 	} else {
-		fprintf(stderr, "Unsupported input format: %s\n", formatStr);
+		fprintf(stderr, "Unsupported input format: %s\n\n", formatStr);
 		printUsage = true;
+		printUsageAsError = true;
 	}
 
 	if (printUsage) {
-		fputs("Usage: ", stderr);
-		fputs(argv[0], stderr);
-		fputs(" <css|js|xml|html|json> <input file|-> [--benchmark] "
-			  "[--mangle-js-identifiers]\n",
-			  stderr);
-		return (EXIT_FAILURE);
+		printHelp(printUsageAsError ? stderr : stdout, argv[0]);
+		if (printUsageAsError) {
+			return (EXIT_FAILURE);
+		}
+		return (EXIT_SUCCESS);
 	}
 
 	char * input = fileGetContent(inputFilename);

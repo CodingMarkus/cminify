@@ -19,7 +19,7 @@ enum CommentVariant {
 	JSCommentVariant,
 };
 
-bool MangleJSIdentifiersEnabled(  );
+bool MangleOutputEnabled(  );
 
 
 bool IsWhitespace( char c );

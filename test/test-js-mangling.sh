@@ -12,7 +12,7 @@ set -eu
 #
 assert( )
 {
-	assertMinification "$1" "$2" js - --mangle-js-identifiers
+	assertMinification "$1" "$2" js - --mangle
 }
 
 
@@ -34,7 +34,7 @@ assertWithoutMangling( )
 #
 assertHTML( )
 {
-	assertMinification "$1" "$2" html - --mangle-js-identifiers
+	assertMinification "$1" "$2" html - --mangle
 }
 
 
@@ -45,7 +45,7 @@ assertHTML( )
 #
 assertXML( )
 {
-	assertMinification "$1" "$2" xml - --mangle-js-identifiers
+	assertMinification "$1" "$2" xml - --mangle
 }
 
 input='function demo(longName){return longName}'
