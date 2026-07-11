@@ -59,4 +59,28 @@ input='a\{b{}'
 expected='a\{b{}'
 assert "$expected" "$input"
 
+input='a{color:#aabbcc;background:#AABBCCDD;border:#ff0000;'
+input="${input}outline:#808000;fill:#f0f;stroke:#abcdefg;"
+input="${input}stop-color:#aabbcc\\ d}"
+expected='a{color:#abc;background:#abcd;border:red;outline:olive;'
+expected="${expected}fill:#f0f;stroke:#abcdefg;stop-color:"
+expected="${expected}#aabbcc\\ d}"
+assert "$expected" "$input"
+
+input='#aabbcc{color:#aabbcc}a{b:"#aabbcc";c:url(#aabbcc)}'
+expected='#aabbcc{color:#abc}a{b:"#aabbcc";c:url(#aabbcc)}'
+assert "$expected" "$input"
+
+input='a{color:black;background:yellow;border:aqua 1px solid;'
+input="${input}box-shadow:0 0 red;"
+input="${input}font-family:black;animation:red}b{color:Grey}"
+input="${input}c{color:#000000}"
+input="${input}d{color:rebeccapurple}"
+expected='a{color:#000;background:#ff0;border:#0ff 1px solid;'
+expected="${expected}box-shadow:0 0 red;"
+expected="${expected}font-family:black;animation:red}b{color:gray}"
+expected="${expected}c{color:#000}"
+expected="${expected}d{color:#639}"
+assert "$expected" "$input"
+
 printf 'Passed all tests\n'
