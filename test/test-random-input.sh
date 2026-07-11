@@ -5,7 +5,7 @@ set -eu
 export LC_CTYPE=C
 export LC_ALL=C
 
-outputPath=./.build/webmincer
+outputPath=${WEBMINCER_BINARY:-./.build/webmincer}
 tmpInput=$( mktemp "${TMPDIR:-/tmp}/webmincer-random-input.XXXXXX" ) || exit 1
 trap 'rm -f "$tmpInput"' EXIT HUP INT TERM
 

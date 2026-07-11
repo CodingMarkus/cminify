@@ -2,6 +2,8 @@
 
 set -eu
 
+binaryPath=${WEBMINCER_BINARY:-./.build/webmincer}
+
 
 # $1 - URL to download.
 #
@@ -102,10 +104,10 @@ _testFile( )
 	printf '%s (%s):\n   ' "$_tf_file" "$_tf_mode"
 	if [ "$_tf_mode" = "mangled" ]
 	then
-		.build/webmincer js "$_tf_file" --mangle-js-identifiers \
+		"$binaryPath" js "$_tf_file" --mangle-js-identifiers \
 			> "$_tf_outputFile" || return 1
 	else
-		.build/webmincer js "$_tf_file" > "$_tf_outputFile" || return 1
+		"$binaryPath" js "$_tf_file" > "$_tf_outputFile" || return 1
 	fi
 	_tf_outputSize=$( wc -c < "$_tf_outputFile" | tr -d ' ' ) || return 1
 	if [ "$_tf_inputSize" = "0" ]

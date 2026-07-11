@@ -16,9 +16,10 @@ assertMinification( )
 {
 	_am_expected=$1
 	_am_input=$2
+	_am_binary=${WEBMINCER_BINARY:-./.build/webmincer}
 	shift 2
 
-	if ! _am_result=$( printf '%b' "$_am_input" | ./.build/webmincer "$@" )
+	if ! _am_result=$( printf '%b' "$_am_input" | "$_am_binary" "$@" )
 	then
 		printf 'Crashed on:\n%s\n' "$_am_input"
 		printf 'Standard output:\n%s\n' "$_am_result"

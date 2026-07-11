@@ -1,43 +1,75 @@
 CC ?= cc
-CFLAGS ?= -O2 -g -Werror -Wall -Wextra -Wno-unused-parameter
+
+BASE_CFLAGS ?= -Werror -Wall -Wextra -Wno-unused-parameter
+BUILD_CFLAGS ?= -O2 -g
+DEBUG_CFLAGS ?= -O0 -g
+
 OUTPUT := webmincer
-SOURCES := \
-	src/js-mangler.c \
-	src/minifier-common.c \
-	src/minifier-css.c \
-	src/minifier-js.c \
-	src/minifier-json.c \
-	src/minifier-xml-html.c \
-	src/webmincer.c
-HEADERS := \
-	src/js-mangler.h \
-	src/minifier.h
+
+BUILD_DIR := .build
+DEBUG_BUILD_DIR := $(BUILD_DIR)/debug
+BUILD_OBJECT_DIR := $(BUILD_DIR)/objects
+DEBUG_OBJECT_DIR := $(DEBUG_BUILD_DIR)/objects
+
+SOURCES := $(wildcard src/*.c)
+HEADERS := $(wildcard src/*.h)
+TEST_SCRIPTS := $(wildcard test/test-*.sh)
+
+BUILD_OBJECTS := $(patsubst src/%.c,$(BUILD_OBJECT_DIR)/%.o,$(SOURCES))
+DEBUG_OBJECTS := $(patsubst src/%.c,$(DEBUG_OBJECT_DIR)/%.o,$(SOURCES))
+
+
 
 .PHONY: build
-build: .build/$(OUTPUT)
+build: $(BUILD_DIR)/$(OUTPUT)
 
-.build/$(OUTPUT): $(SOURCES) $(HEADERS)
-	mkdir -p .build
-	$(CC) $(CFLAGS) -o .build/$(OUTPUT) $(SOURCES)
+$(BUILD_DIR)/$(OUTPUT): $(BUILD_OBJECTS) | $(BUILD_DIR)
+	$(CC) $(BASE_CFLAGS) $(BUILD_CFLAGS) -o $@ $(BUILD_OBJECTS)
+
+$(BUILD_OBJECT_DIR)/%.o: src/%.c $(HEADERS) | $(BUILD_DIR)
+	mkdir -p $(dir $@)
+	$(CC) $(BASE_CFLAGS) $(BUILD_CFLAGS) -c -o $@ $<
+
+$(DEBUG_OBJECT_DIR)/%.o: src/%.c $(HEADERS) | $(DEBUG_BUILD_DIR)
+	mkdir -p $(dir $@)
+	$(CC) $(BASE_CFLAGS) $(DEBUG_CFLAGS) -c -o $@ $<
+
+$(DEBUG_BUILD_DIR)/$(OUTPUT): $(DEBUG_OBJECTS) | $(DEBUG_BUILD_DIR)
+	$(CC) $(BASE_CFLAGS) $(DEBUG_CFLAGS) -o $@ $(DEBUG_OBJECTS)
+
+$(BUILD_DIR):
+	mkdir -p $@
 
 
-.PHONY: strip
-strip: .build/$(OUTPUT)
-	strip .build/$(OUTPUT)
+
+.PHONY: debug
+debug: $(DEBUG_BUILD_DIR)/$(OUTPUT)
+
+$(DEBUG_BUILD_DIR):
+	mkdir -p $@
+
 
 
 .PHONY: test
 test: build
-	./test/test-xml.sh
-	./test/test-html.sh
-	./test/test-css.sh
-	./test/test-json.sh
-	./test/test-js.sh
-	./test/test-js-mangling.sh
-	./test/test-js-libs.sh
-	./test/test-random-input.sh
+	for testScript in $(TEST_SCRIPTS); do \
+		WEBMINCER_BINARY=./$(BUILD_DIR)/$(OUTPUT) \
+		WEBMINCER_OBJECT_DIR=./$(BUILD_OBJECT_DIR) \
+		$$testScript || exit 1; \
+	done
+
+
+
+.PHONY: test-debug
+test-debug: debug
+	for testScript in $(TEST_SCRIPTS); do \
+		WEBMINCER_BINARY=./$(DEBUG_BUILD_DIR)/$(OUTPUT) \
+		WEBMINCER_OBJECT_DIR=./$(DEBUG_OBJECT_DIR) \
+		$$testScript || exit 1; \
+	done
+
 
 
 .PHONY: clean
 clean:
-	rm -rf .build
+	rm -rf $(BUILD_DIR)
