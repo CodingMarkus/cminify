@@ -11,15 +11,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void xmlhtmlCorrectErrorPosition( const char * encoded,
-										const char * decoded,
-										size_t * errorPosition,
-										bool isXml )
+static void xmlhtmlCorrectErrorPosition(
+	const char * encoded,
+	const char * decoded,
+	size_t * errorPosition,
+	bool isXml )
 {
 	size_t encodedI = 0, decodedI = 0;
 	bool inCdata = false;
-	int (*tagncmp)(const char *, const char *, size_t)
-		= (isXml ? strncmp : StrNICmp);
+	int (* tagncmp)(const char *, const char *, size_t) = (isXml ?
+		strncmp : StrNICmp
+	);
 	while (true) {
 		if (*errorPosition == decodedI) {
 			*errorPosition = encodedI;
