@@ -21,6 +21,8 @@ enum CommentVariant {
 
 bool MangleOutputEnabled( void );
 
+bool CompactWhitespaceEnabled( void );
+
 
 bool IsWhitespace( char c );
 

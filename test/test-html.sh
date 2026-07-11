@@ -12,7 +12,10 @@ set -eu
 #
 assert( )
 {
-	assertMinification "$1" "$2" html -
+	_am_expected=$1
+	_am_input=$2
+	shift 2
+	assertMinification "$_am_expected" "$_am_input" html - "$@"
 }
 
 input='<script>"<"+"/script>"</script>'
@@ -28,8 +31,28 @@ expected='<script>a="<\/script>"</script>'
 assert "$expected" "$input"
 
 input='  a  b  '
-expected=' a b '
+expected='  a  b  '
 assert "$expected" "$input"
+
+input='  a  b  '
+expected=' a b '
+assert "$expected" "$input" --compact-ws
+
+input='<div>  text  <span>  more  </span>  </div>'
+expected='<div>  text  <span>  more  </span>  </div>'
+assert "$expected" "$input"
+
+input='<div>  text  <span>  more  </span>  </div>'
+expected='<div> text <span>more </span></div>'
+assert "$expected" "$input" --compact-ws
+
+input='<pre>  text  </pre>'
+expected='<pre>  text  </pre>'
+assert "$expected" "$input"
+
+input='<pre>  text  </pre>'
+expected='<pre> text </pre>'
+assert "$expected" "$input" --compact-ws
 
 input='<scrIpT TyPe=application/json&plus;ld> { "key" : true } </script>'
 expected='<scrIpT TyPe=application/json&plus;ld>{"key":true}</script>'
@@ -84,11 +107,19 @@ expected='<html></html>'
 assert "$expected" "$input"
 
 input='<html> <html> </html> <html> </html> </html>'
-expected='<html> <html></html> <html></html> </html>'
+expected='<html> <html> </html> <html> </html> </html>'
 assert "$expected" "$input"
 
+input='<html> <html> </html> <html> </html> </html>'
+expected='<html> <html></html> <html></html> </html>'
+assert "$expected" "$input" --compact-ws
+
 input='<html>  <!---->'
-expected='<html> '
+expected='<html>  '
+assert "$expected" "$input"
+
+input='<html></html>  '
+expected='<html></html>'
 assert "$expected" "$input"
 
 printf 'Passed all tests\n'

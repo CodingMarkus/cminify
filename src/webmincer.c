@@ -13,6 +13,7 @@
 #include <string.h>
 
 static bool optionMangleOutput = false;
+static bool optionCompactWhitespace = false;
 static const char * const VERSION = "1.0";
 
 struct Format {
@@ -74,6 +75,10 @@ static void printHelp( FILE * stream, const char * argv0 )
 		"                            the format is js or the input is HTML\n"
 		"                            with embedded JavaScript.\n"
 		"\n"
+		"    --compact-ws\n"
+		"                            Compact whitespace in HTML and XML text\n"
+		"                            nodes. This can change the rendered layout.\n"
+		"\n"
 		"    --version               Print version %s.\n"
 		"\n\n"
 		"Notes:\n"
@@ -132,6 +137,12 @@ bool MangleOutputEnabled( void )
 }
 
 
+bool CompactWhitespaceEnabled( void )
+{
+	return (optionCompactWhitespace);
+}
+
+
 struct LineColumn {
 	size_t line;
 	size_t column;
@@ -177,6 +188,8 @@ int main( int argc, const char * argv[] )
 			return (EXIT_SUCCESS);
 		} else if (!strcmp(argv[i], "--mangle")) {
 			optionMangleOutput = true;
+		} else if (!strcmp(argv[i], "--compact-ws")) {
+			optionCompactWhitespace = true;
 		} else if (formatStr == NULL) {
 			formatStr = argv[i];
 		} else if (inputFilename == NULL) {

@@ -76,6 +76,7 @@ assertHelpOutput( )
 	assertContains '-h, -help, --help' "$_ah_file"
 	assertContains '--benchmark' "$_ah_file"
 	assertContains '--mangle' "$_ah_file"
+	assertContains '--compact-ws' "$_ah_file"
 	assertContains '--version' "$_ah_file"
 	assertContains 'Notes:' "$_ah_file"
 	assertContains "Use '-' as the input file" "$_ah_file"

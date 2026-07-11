@@ -67,3 +67,7 @@ Design objectives
 - This minifier is not a cleaner. It should not modify the semantics of the markup.
 
 The design of optional JavaScript identifier mangling is documented in [JavaScript Identifier Mangling](doc/JSMangler.md).
+
+HTML and XML text nodes are preserved by default because CSS can make any
+element preserve whitespace. Use `--compact-ws` to compact
+whitespace in text nodes when a layout change is acceptable.

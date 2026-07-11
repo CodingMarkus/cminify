@@ -997,7 +997,7 @@ static struct Minification minifyXmlhtml( const char * xmlhtml, bool isXml )
 			i += 1;
 			syntaxBlock = SYNTAX_BLOCK_CONTENT;
 
-			if (isXml) {
+			if (isXml && CompactWhitespaceEnabled()) {
 				// Ignore whitespace except between opening and closing tags
 
 				size_t k = i;
@@ -1324,14 +1324,9 @@ static struct Minification minifyXmlhtml( const char * xmlhtml, bool isXml )
 			free(decodedValue.result);
 			continue;
 		}
-		if (!isXml && syntaxBlock == SYNTAX_BLOCK_CONTENT
+		if (CompactWhitespaceEnabled()
+			&& syntaxBlock == SYNTAX_BLOCK_CONTENT
 			&& IsWhitespace(xmlhtml[i])) {
-			if (currentTagLength == sizeof "pre" - 1
-				&& !StrNICmp(currentTag, "pre", sizeof "pre" - 1)) {
-				m.result[resultLength++] = xmlhtml[i];
-				i += 1;
-				continue;
-			}
 			while (IsWhitespace(xmlhtml[i])) {
 				i += 1;
 			}
