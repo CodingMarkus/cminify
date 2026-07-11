@@ -5,8 +5,34 @@ WebMinCer is a minifier for CSS, JavaScript, XML, HTML and JSON, written in C. I
 
 This project is mirrored on [GitHub](https://github.com/CodingMarkus/WebMinCer).
 
-
 The name WebMinCer is a play on web, minification, and C, as well as the word mincer. The name reflects the tool's purpose: it effectively feeds web-language source files through a virtual mincer to produce compact output.
+
+
+Building and testing
+--------------------
+
+WebMinCer uses a small `Makefile` with separate targets for optimized,
+debug, and test builds.
+
+- `make` or `make build` builds the optimized binary at
+  `.build/webmincer`.
+
+- `make debug` builds a debug binary at `.build/debug/webmincer`.
+
+- `make test` builds the optimized binary and runs all test scripts
+  against `.build/webmincer`.
+
+- `make test-debug` builds the debug binary and runs all test scripts
+  against `.build/debug/webmincer`.
+
+- `make clean` removes the entire `.build` directory.
+
+Object files are written to `.build/objects` for optimized builds and to
+`.build/debug/objects` for debug builds.
+
+Build requirements are a POSIX shell environment, `make`, and a modern C
+compiler. The build uses the `cc` command by default, but you can
+override it, for example with `make CC=clang` or `make CC=gcc`.
 
 
 Origins and relationship to cminify
@@ -26,7 +52,7 @@ Design objectives
 
 - Easy to build with a simple `make` invocation.
 
-- The only build requirements are a POSIX shell environment, make and a modern C compiler (clang recommended, gcc possible as well).
+- The only build requirements are a POSIX shell environment, make and a modern C compiler (clang recommended, gcc possible as well, others might work).
 
 - It is not intended to provide bindings for scripting languages.
 
