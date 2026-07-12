@@ -3,6 +3,7 @@
 set -eu
 
 binaryPath=${WEBMINCER_BINARY:-./.build/webmincer}
+updateReadmeHelpScript=./util/update-readme-help-output.sh
 tmpDir=$( mktemp -d "${TMPDIR:-/tmp}/webmincer-cli.XXXXXX" ) || exit 1
 trap 'rm -rf "$tmpDir"' EXIT HUP INT TERM
 
@@ -50,7 +51,9 @@ assertNoTabsOrLongLines( )
 		printf 'Found a tab character in %s\n' "$_an_file"
 		exit 1
 	fi
-	if ! awk 'length > 80 { exit 1 }' "$_an_file"
+	if ! awk -f - "$_an_file" <<'AWK'
+length > 80 { exit 1 }
+AWK
 	then
 		printf 'Found a line longer than 80 characters in %s\n' \
 			"$_an_file"
@@ -90,7 +93,7 @@ assertReadmeContainsHelpOutput( )
 	_archo_help_file=$1
 	_archo_readme_file=$2
 
-	if ! awk '
+	if ! awk -f - "$_archo_help_file" "$_archo_readme_file" <<'AWK'
 		NR == FNR {
 			if ($0 !~ /^[[:space:]]*$/ || started) {
 				lines[++lineCount] = $0
@@ -118,7 +121,7 @@ assertReadmeContainsHelpOutput( )
 		END {
 			exit(!found)
 		}
-	' "$_archo_help_file" "$_archo_readme_file"
+AWK
 	then
 		printf 'Expected README.md to contain the complete help output\n'
 		exit 1
@@ -130,6 +133,24 @@ assertStdout
 cp "$tmpDir/stdout" "$tmpDir/help-no-args"
 assertHelpOutput "$tmpDir/help-no-args"
 assertReadmeContainsHelpOutput "$tmpDir/help-no-args" README.md
+
+cp README.md "$tmpDir/README.md"
+awk -f - "$tmpDir/README.md" > "$tmpDir/README.updated" <<'AWK'
+	!updated && /Show this help page\./ {
+		sub(/Show this help page\./, "Show outdated help text.")
+		updated = 1
+	}
+	{
+		print
+	}
+	END {
+		exit(!updated)
+	}
+AWK
+mv "$tmpDir/README.updated" "$tmpDir/README.md"
+WEBMINCER_BINARY="$binaryPath" "$updateReadmeHelpScript" \
+	"$tmpDir/README.md"
+assertReadmeContainsHelpOutput "$tmpDir/help-no-args" "$tmpDir/README.md"
 
 assertStdout -h
 	cp "$tmpDir/stdout" "$tmpDir/help-short"

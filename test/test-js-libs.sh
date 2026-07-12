@@ -114,13 +114,59 @@ _testFile( )
 	then
 		_tf_reduction=0.0
 	else
-		_tf_reduction=$( \
-			awk "BEGIN { print 100.0 - 100.0 * $_tf_outputSize / $_tf_inputSize }"
+		_tf_reduction=$( awk -v outputSize="$_tf_outputSize" \
+			-v inputSize="$_tf_inputSize" -f - <<'AWK'
+BEGIN {
+	print 100.0 - 100.0 * outputSize / inputSize
+}
+AWK
 		) || return 1
 	fi
 	printf 'Reduced the size by %.1f%% from %s to %s bytes\n' \
 		"$_tf_reduction" "$_tf_inputSize" "$_tf_outputSize"
 	node -c "$_tf_outputFile" || return 1
+	benchmarkInputSize=$_tf_inputSize
+	benchmarkOutputSize=$_tf_outputSize
+	benchmarkReduction=$_tf_reduction
+}
+
+
+# $1 - File containing the expected consecutive lines.
+# $2 - File that must contain those lines.
+#
+_assertContainsConsecutiveLines( )
+{
+	_accl_expectedFile=$1
+	_accl_actualFile=$2
+
+	if ! awk -f - "$_accl_expectedFile" "$_accl_actualFile" <<'AWK'
+		NR == FNR {
+			lines[++lineCount] = $0
+			next
+		}
+		lineCount > 0 && $0 == lines[matchedLines + 1] {
+			matchedLines += 1
+			if (matchedLines == lineCount) {
+				found = 1
+			}
+			next
+		}
+		$0 == lines[1] {
+			matchedLines = 1
+			next
+		}
+		{
+			matchedLines = 0
+		}
+		END {
+			exit(!found)
+		}
+AWK
+	then
+		printf 'Expected %s to contain the current benchmark table\n' \
+			"$_accl_actualFile"
+		return 1
+	fi
 }
 
 
@@ -131,15 +177,42 @@ _main( )
 	_main_tmpDir=$( mktemp -d \
 		"${TMPDIR:-/tmp}/webmincer-js-libs.XXXXXX" ) || return 1
 	trap 'rm -rf "$_main_tmpDir"' EXIT HUP INT TERM
+	_main_tableFile=$_main_tmpDir/size-reduction-table.md
+	{
+		printf '%s%s\n' \
+			'| Library | Original bytes | Minified bytes | Reduction |' \
+			' Minified and mangled bytes | Reduction |'
+		printf '%s\n' '| --- | ---: | ---: | ---: | ---: | ---: |'
+	} > "$_main_tableFile" || return 1
 
 	for file in .test/test-js-libs/*.js
 	do
 		baseName=$( basename "$file" .js )
 		_testFile "$file" "plain" "$_main_tmpDir/$baseName.min.js" \
 			|| return 1
+		plainOutputSize=$benchmarkOutputSize
+		plainReduction=$benchmarkReduction
 		_testFile "$file" "mangled" \
 			"$_main_tmpDir/$baseName.mangled.js" || return 1
+		printf '| `%s.js` | %s | %s | %.1f%% | %s | %.1f%% |\n' \
+			"$baseName" "$benchmarkInputSize" "$plainOutputSize" \
+			"$plainReduction" "$benchmarkOutputSize" \
+			"$benchmarkReduction" >> "$_main_tableFile" || return 1
 	done
+	if [ "${WEBMINCER_SKIP_SIZE_REDUCTION_BASELINE_CHECK:-}" != "1" ]
+	then
+		_assertContainsConsecutiveLines "$_main_tableFile" \
+			doc/CurrentSizeReductionBaselines.md || return 1
+		_main_generatedChart=$_main_tmpDir/JavaScriptLibrarySizeReduction.svg
+		util/generate-size-reduction-chart.sh "$_main_generatedChart" \
+			|| return 1
+		if ! cmp -s "$_main_generatedChart" \
+			doc/assets/JavaScriptLibrarySizeReduction.svg
+		then
+			printf 'Expected the SVG chart to match the current benchmark table\n'
+			return 1
+		fi
+	fi
 }
 
 

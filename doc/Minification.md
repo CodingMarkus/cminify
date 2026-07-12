@@ -67,7 +67,9 @@ WebMinCer does not perform cross-file analysis, bundling, tree shaking, source-m
 Possible future work
 --------------------
 
-- Opt-in JavaScript property mangling with an explicit reserved-name list.
+- JavaScript source-map generation so minified JavaScript remains debuggable.
+
+- Highly restricted JavaScript property mangling for deliberately closed-world bundler output that follows an explicit property-name convention. Bundling alone does not make it safe because property names can be observed dynamically or used by external code.
 
 - Frequency-based JavaScript mangled-name assignment.
 

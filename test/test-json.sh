@@ -2,7 +2,7 @@
 
 set -eu
 
-. test/lib_assert.sh
+. test/lib/lib-assert.sh
 
 
 # $1 - Expected minified output.

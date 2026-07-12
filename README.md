@@ -94,7 +94,15 @@ Design objectives
 
 - This minifier is not a cleaner. It should not modify the semantics of the markup.
 
-Technical details about the current minifiers and their scope are documented in [Minification](doc/Minification.md). The design of optional JavaScript identifier mangling is documented in [JavaScript Identifier Mangling](doc/JSMangler.md).
+
+Documentation
+-------------
+
+- Technical details about the current minifiers and their scope are documented in [Minification](doc/Minification.md).
+
+- [Current size-reduction baselines](doc/CurrentSizeReductionBaselines.md) compare original, minified, and mangled JavaScript library sizes.
+
+- [Development](doc/Development.md) covers building, tests, and development utilities.
 
 
 
