@@ -58,7 +58,7 @@ $(DEBUG_BUILD_DIR):
 
 .PHONY: test
 test: build
-	for testScript in $(TEST_SCRIPTS); do \
+	@for testScript in $(TEST_SCRIPTS); do \
 		WEBMINCER_BINARY=./$(BUILD_DIR)/$(OUTPUT) \
 		WEBMINCER_OBJECT_DIR=./$(BUILD_OBJECT_DIR) \
 		$$testScript || exit 1; \
@@ -68,7 +68,7 @@ test: build
 
 .PHONY: bench
 bench: build
-	for testScript in $(TEST_SCRIPTS); do \
+	@for testScript in $(TEST_SCRIPTS); do \
 		WEBMINCER_BINARY=./$(BUILD_DIR)/$(OUTPUT) \
 		WEBMINCER_OBJECT_DIR=./$(BUILD_OBJECT_DIR) \
 		$$testScript --bench || exit 1; \
@@ -78,7 +78,7 @@ bench: build
 
 .PHONY: test-debug
 test-debug: debug
-	for testScript in $(TEST_SCRIPTS); do \
+	@for testScript in $(TEST_SCRIPTS); do \
 		WEBMINCER_BINARY=./$(DEBUG_BUILD_DIR)/$(OUTPUT) \
 		WEBMINCER_OBJECT_DIR=./$(DEBUG_OBJECT_DIR) \
 		$$testScript || exit 1; \

@@ -5,7 +5,7 @@ Run `make test` to build the optimized binary and run the complete test suite. I
 
 Run `make bench` to run the optimized test suite with the `--bench` option. Most test scripts currently ignore the option. `test-js-libs.sh` uses it to compare the JavaScript library size-reduction results to the documented baseline.
 
-Every successful test script prints a single success line with a green checkmark. On terminals without UTF-8 support, it prints `OK` instead. Failed tests leave a blank line, print a red cross or `FAIL`, then print their diagnostics. If the terminal supports colours, the status is coloured green or red.
+Every test script prints its name followed by `PASSED` when it succeeds. Failed tests print the test name followed by `FAILED`, then their diagnostics. `test-js-libs.sh` also prints the JavaScript runtime it used. If the terminal supports colours, the status is coloured green or red.
 
 
 Test configuration
@@ -23,7 +23,7 @@ Test scripts use the following environment variables. The Makefile supplies the 
 
 - `TERM` controls colour output. Set it to `dumb` to disable colours on an interactive terminal.
 
-The scripts use the normal shell `PATH` to locate required commands, including `node`, `wget`, and `curl`.
+The scripts use the normal shell `PATH` to locate required commands, including `bun` or `node`, `wget`, and `curl`. `test-js-libs.sh` prefers Bun for JavaScript validation and falls back to Node.js.
 
 
 Test scripts

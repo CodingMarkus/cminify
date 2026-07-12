@@ -40,7 +40,7 @@ assertMinification( )
 
 	if [ "$_am_expected" != "$_am_result" ]
 	then
-		testFail 'Error: expected:\n%s\ngot:\n%s\n' \
+		testFail 'Output differs:\nExpected: [%s]\nActual:   [%s]\n' \
 			"$_am_expected" "$_am_result"
 	fi
 }

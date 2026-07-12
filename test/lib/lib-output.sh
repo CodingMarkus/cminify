@@ -10,16 +10,6 @@ set -eu
 [ -n "${__included_test_output_sh:-}" ] && return 0
 __included_test_output_sh=1
 
-
-case "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" in
-*UTF-8*|*UTF8*|*utf-8*|*utf8*)
-	testOutputIsUtf8=1
-	;;
-*)
-	testOutputIsUtf8=0
-	;;
-esac
-
 if [ -t 1 ] && [ "${TERM:-}" != "dumb" ]
 then
 	testOutputHasColors=1
@@ -37,20 +27,11 @@ _testPrintStatus( )
 	_tps_success=$1
 	if [ "$_tps_success" = "1" ]
 	then
-		_tps_text=OK
+		_tps_text=PASSED
 		_tps_color=32
 	else
-		_tps_text=FAIL
+		_tps_text=FAILED
 		_tps_color=31
-	fi
-	if [ "$testOutputIsUtf8" = "1" ]
-	then
-		if [ "$_tps_success" = "1" ]
-		then
-			_tps_text='✓'
-		else
-			_tps_text='✗'
-		fi
 	fi
 	if [ "$testOutputHasColors" = "1" ]
 	then
@@ -61,13 +42,30 @@ _testPrintStatus( )
 }
 
 
-# $1 - Successful test message.
+# Prints the name of the calling test script.
 #
-# Prints the only output produced by a successful test script.
+# The name is the filename without its `.sh` extension.
+#
+_testPrintName( )
+{
+	_tpn_name=${0##*/}
+	_tpn_name=${_tpn_name%.sh}
+	printf '%s' "$_tpn_name"
+}
+
+
+# $1 - Optional test label.
+#
+# Prints the successful test status.
 #
 testSuccess( )
 {
-	printf '%s ' "$1"
+	_testPrintName
+	if [ "$#" -gt "0" ]
+	then
+		printf ' (%s)' "$1"
+	fi
+	printf ': '
 	_testPrintStatus 1
 	printf '\n'
 }
@@ -80,9 +78,10 @@ testSuccess( )
 #
 testFail( )
 {
-	printf '\n'
+	_testPrintName
+	printf ': '
 	_testPrintStatus 0
-	printf '\n'
+	printf '\n\n'
 	printf "$@"
 	exit 1
 }

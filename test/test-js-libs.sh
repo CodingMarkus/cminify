@@ -8,6 +8,18 @@ binaryPath=${WEBMINCER_BINARY:-./.build/webmincer}
 benchmark=0
 printSizes=0
 
+if command -v bun > /dev/null 2>&1
+then
+	jsSyntaxChecker=bun
+	jsSyntaxCheckerName=Bun
+elif command -v node > /dev/null 2>&1
+then
+	jsSyntaxChecker=node
+	jsSyntaxCheckerName=Node.js
+else
+	testFail 'Could not find Bun or Node.js for JavaScript verification\n'
+fi
+
 
 _printUsage( )
 {
@@ -123,6 +135,23 @@ _download( )
 }
 
 
+# $1 - JavaScript file to verify.
+#
+# Verifies the JavaScript syntax without executing the file.
+#
+_verifyJavaScriptSyntax( )
+{
+	_vjs_file=$1
+
+	if [ "$jsSyntaxChecker" = "bun" ]
+	then
+		bun build "$_vjs_file" --no-bundle --outfile /dev/null
+	else
+		node -c "$_vjs_file"
+	fi
+}
+
+
 # $1 - Input file.
 # $2 - Minification mode.
 # $3 - Output file.
@@ -156,7 +185,8 @@ _testFile( )
 		testFail 'Minified output is larger than %s (%s): %s > %s bytes\n' \
 			"$_tf_file" "$_tf_mode" "$_tf_outputSize" "$_tf_inputSize"
 	fi
-	if ! node -c "$_tf_outputFile" > /dev/null 2> "$_tf_outputFile.stderr"
+	if ! _verifyJavaScriptSyntax "$_tf_outputFile" > /dev/null \
+		2> "$_tf_outputFile.stderr"
 	then
 		testFail 'Generated JavaScript does not verify for %s (%s):\n%s' \
 			"$_tf_file" "$_tf_mode" "$(cat "$_tf_outputFile.stderr")"
@@ -294,4 +324,4 @@ fi
 
 _download || testFail 'Could not download the JavaScript library test files\n'
 _main || testFail 'Could not run the JavaScript library test\n'
-testSuccess 'Passed the JavaScript library test'
+testSuccess "$jsSyntaxCheckerName"

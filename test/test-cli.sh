@@ -41,6 +41,31 @@ assertContains( )
 }
 
 
+assertBlankLineAfterHeading( )
+{
+	_ablah_heading=$1
+	_ablah_file=$2
+
+	if ! awk -v heading="$_ablah_heading" -f - "$_ablah_file" <<'AWK'
+		$0 == heading {
+			getline line
+			if (line != "") {
+				exit 1
+			}
+			found = 1
+			exit
+		}
+		END {
+			exit(!found)
+		}
+AWK
+	then
+		testFail 'Expected a blank line after %s in %s\n' \
+			"$_ablah_heading" "$_ablah_file"
+	fi
+}
+
+
 assertNoTabsOrLongLines( )
 {
 	_an_file=$1
@@ -64,21 +89,25 @@ assertHelpOutput( )
 	_ah_file=$1
 
 	assertNoTabsOrLongLines "$_ah_file"
-	assertContains 'Usage:' "$_ah_file"
+	assertContains 'USAGE' "$_ah_file"
+	assertBlankLineAfterHeading 'USAGE' "$_ah_file"
 	assertContains 'webmincer <format> <input-file|-> [options]' "$_ah_file"
-	assertContains 'Formats:' "$_ah_file"
+	assertContains 'FORMATS' "$_ah_file"
+	assertBlankLineAfterHeading 'FORMATS' "$_ah_file"
 	assertContains 'css' "$_ah_file"
 	assertContains 'js' "$_ah_file"
 	assertContains 'xml' "$_ah_file"
 	assertContains 'html' "$_ah_file"
 	assertContains 'json' "$_ah_file"
-	assertContains 'Options:' "$_ah_file"
+	assertContains 'OPTIONS' "$_ah_file"
+	assertBlankLineAfterHeading 'OPTIONS' "$_ah_file"
 	assertContains '-h, -help, --help' "$_ah_file"
 	assertContains '--benchmark' "$_ah_file"
 	assertContains '--mangle' "$_ah_file"
 	assertContains '--compact-ws' "$_ah_file"
 	assertContains '--version' "$_ah_file"
-	assertContains 'Notes:' "$_ah_file"
+	assertContains 'NOTES' "$_ah_file"
+	assertBlankLineAfterHeading 'NOTES' "$_ah_file"
 	assertContains "Use '-' as the input file" "$_ah_file"
 	assertContains 'Currently only JavaScript code is' "$_ah_file"
 	assertContains 'the format is js or the input is HTML' "$_ah_file"
@@ -165,4 +194,4 @@ assertStdout --version
 assertNoTabsOrLongLines "$tmpDir/version"
 assertContains '1.0' "$tmpDir/version"
 
-testSuccess 'Passed all tests'
+testSuccess

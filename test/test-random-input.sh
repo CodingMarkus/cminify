@@ -37,4 +37,4 @@ do
 	done
 done
 
-testSuccess 'Passed the test - no crash occurred'
+testSuccess

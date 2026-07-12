@@ -32,4 +32,4 @@ then
 	testFail 'Unexpected object files found in ./src\n'
 fi
 
-testSuccess 'Passed the build layout test'
+testSuccess

@@ -95,4 +95,4 @@ expected="${expected}c{color:#000}"
 expected="${expected}d{color:#639}"
 assert "$expected" "$input"
 
-testSuccess 'Passed all tests'
+testSuccess

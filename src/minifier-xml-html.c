@@ -991,6 +991,16 @@ static struct Minification minifyXmlhtml( const char * xmlhtml, bool isXml )
 				syntaxBlock = SYNTAX_BLOCK_CONTENT;
 				currentTagLength = 0;
 				i += 1;
+
+				// Trim whitespace at the end of the document
+
+				size_t k = i;
+				while (IsWhitespace(xmlhtml[k])) {
+					k += 1;
+				}
+				if (xmlhtml[k] == '\0') {
+					i = k;
+				}
 				continue;
 			}
 

@@ -12,11 +12,13 @@ Command-line reference
 ----------------------
 
 ```
-Usage:
+USAGE
+
     webmincer <format> <input-file|-> [options]
 
 
-Formats:
+FORMATS
+
     css    Minify CSS input.
     js     Minify JavaScript input.
     xml    Minify XML input.
@@ -24,7 +26,8 @@ Formats:
     json   Minify JSON input.
 
 
-Options:
+OPTIONS
+
     -h, -help, --help       Show this help page.
 
     --benchmark             Print size reduction statistics.
@@ -43,7 +46,8 @@ Options:
     --version               Print version 1.0.
 
 
-Notes:
+NOTES
+
     Use '-' as the input file to read from standard input.
 ```
 

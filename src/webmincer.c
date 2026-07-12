@@ -53,17 +53,20 @@ static void printHelp( FILE * stream, const char * argv0 )
 	fprintf(
 		stream,
 		"\n"
-		"Usage:\n"
+		"USAGE\n"
+		"\n"
 		"    %s <format> <input-file|-> [options]\n"
 		"\n\n"
-		"Formats:\n"
+		"FORMATS\n"
+		"\n"
 		"    css    Minify CSS input.\n"
 		"    js     Minify JavaScript input.\n"
 		"    xml    Minify XML input.\n"
 		"    html   Minify HTML input.\n"
 		"    json   Minify JSON input.\n"
 		"\n\n"
-		"Options:\n"
+		"OPTIONS\n"
+		"\n"
 		"    -h, -help, --help       Show this help page.\n"
 		"\n"
 		"    --benchmark             Print size reduction statistics.\n"
@@ -81,7 +84,8 @@ static void printHelp( FILE * stream, const char * argv0 )
 		"\n"
 		"    --version               Print version %s.\n"
 		"\n\n"
-		"Notes:\n"
+		"NOTES\n"
+		"\n"
 		"    Use '-' as the input file to read from standard input.\n",
 		name,
 		VERSION);

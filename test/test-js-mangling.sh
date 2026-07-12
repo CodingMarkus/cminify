@@ -529,4 +529,4 @@ input='<script><![CDATA[ function demo(longName){let otherName=longName+1;'\
 expected='<script>function demo(a){let b=a+1;return b}</script>'
 assertXML "$expected" "$input"
 
-testSuccess 'Passed all tests'
+testSuccess

@@ -23,4 +23,4 @@ input=' false '
 expected='false'
 assert "$expected" "$input"
 
-testSuccess 'Passed all tests'
+testSuccess
