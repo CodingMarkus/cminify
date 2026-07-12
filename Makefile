@@ -7,7 +7,7 @@ BASE_CFLAGS ?= \
 	-Wno-unused-parameter \
 	-Wconversion \
 	-Wsign-conversion
-BUILD_CFLAGS ?= -O2 -g
+BUILD_CFLAGS ?= -Os -g
 DEBUG_CFLAGS ?= -O0 -g
 
 OUTPUT := webmincer
