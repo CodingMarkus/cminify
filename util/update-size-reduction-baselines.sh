@@ -22,8 +22,7 @@ trap 'rm -rf "$temporaryDirectory"' EXIT HUP INT TERM
 
 if ! (
 	cd "$projectDirectory"
-	WEBMINCER_PRINT_SIZE_REDUCTION_BENCHMARK=1 \
-	WEBMINCER_SKIP_SIZE_REDUCTION_BASELINE_CHECK=1 "$testScript"
+	"$testScript" --print-sizes
 ) > "$testOutput"
 then
 	cat "$testOutput"

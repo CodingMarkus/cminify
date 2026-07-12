@@ -6,13 +6,38 @@ set -eu
 
 binaryPath=${WEBMINCER_BINARY:-./.build/webmincer}
 benchmark=0
+printSizes=0
+
+
+_printUsage( )
+{
+	printf '%s\n' 'Usage: test-js-libs.sh [--bench] [--print-sizes]'
+	printf '%s\n' ''
+	printf '%s\n' 'Options:'
+	printf '%s\n' '    --bench             Verify the documented size-reduction baseline.'
+	printf '%s\n' '    --print-sizes       Print sizes without verifying the documented baseline.'
+	printf '%s\n' '    -h, -help, --help   Show this help page.'
+}
 
 for argument in "$@"
 do
-	if [ "$argument" = "--bench" ]
-	then
+	case "$argument" in
+	--bench)
 		benchmark=1
-	fi
+		;;
+	--print-sizes)
+		printSizes=1
+		;;
+	-h|-help|--help)
+		_printUsage
+		exit 0
+		;;
+	*)
+		printf 'Unknown option: %s\n' "$argument" >&2
+		_printUsage >&2
+		exit 2
+		;;
+	esac
 done
 
 
@@ -234,8 +259,7 @@ _main( )
 				"$benchmarkReduction" >> "$_main_tableFile" || return 1
 		fi
 	done
-	if [ "$benchmark" = "1" ] && \
-		[ "${WEBMINCER_SKIP_SIZE_REDUCTION_BASELINE_CHECK:-}" != "1" ]
+	if [ "$benchmark" = "1" ]
 	then
 		if ! _assertContainsConsecutiveLines "$_main_tableFile" \
 			doc/CurrentSizeReductionBaselines.md
@@ -255,7 +279,7 @@ _main( )
 				"$(cat "$_main_tableFile")"
 		fi
 	fi
-	if [ "${WEBMINCER_PRINT_SIZE_REDUCTION_BENCHMARK:-}" = "1" ]
+	if [ "$printSizes" = "1" ]
 	then
 		cat "$_main_tableFile"
 	fi
@@ -263,7 +287,7 @@ _main( )
 
 
 reportBenchmark=$benchmark
-if [ "${WEBMINCER_PRINT_SIZE_REDUCTION_BENCHMARK:-}" = "1" ]
+if [ "$printSizes" = "1" ]
 then
 	reportBenchmark=1
 fi

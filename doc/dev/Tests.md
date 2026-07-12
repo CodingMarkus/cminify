@@ -8,6 +8,24 @@ Run `make bench` to run the optimized test suite with the `--bench` option. Most
 Every successful test script prints a single success line with a green checkmark. On terminals without UTF-8 support, it prints `OK` instead. Failed tests leave a blank line, print a red cross or `FAIL`, then print their diagnostics. If the terminal supports colours, the status is coloured green or red.
 
 
+Test configuration
+------------------
+
+Test scripts use the following environment variables. The Makefile supplies the two `WEBMINCER_` variables; they are useful when running individual test scripts against another build.
+
+- `WEBMINCER_BINARY` sets the WebMinCer executable path. The default is `./.build/webmincer`.
+
+- `WEBMINCER_OBJECT_DIR` sets the object-file directory for `test-build-layout.sh`. The default is `./.build/obj`.
+
+- `TMPDIR` sets the directory used for temporary test files. If it is unset, `mktemp` selects the system default.
+
+- `LC_ALL`, `LC_CTYPE`, or `LANG` select whether test statuses use UTF-8 symbols.
+
+- `TERM` controls colour output. Set it to `dumb` to disable colours on an interactive terminal.
+
+The scripts use the normal shell `PATH` to locate required commands, including `node`, `wget`, and `curl`.
+
+
 Test scripts
 ------------
 
@@ -21,7 +39,7 @@ Test scripts
 
 - `test-js.sh` verifies JavaScript syntax preservation, whitespace and comment removal, and JavaScript-specific output reductions.
 
-- `test-js-libs.sh` minifies pinned third-party JavaScript libraries and validates the generated JavaScript. It also fails if either output grows beyond its input, or if mangling makes the output bigger than normal minification. With `--bench`, it verifies the size-reduction baseline. Its baseline workflow is documented in [Size reduction baseline](SizeReductionBaseline.md).
+- `test-js-libs.sh` minifies pinned third-party JavaScript libraries and validates the generated JavaScript. It also fails if either output grows beyond its input, or if mangling makes the output bigger than normal minification. With `--bench`, it verifies the size-reduction baseline. `--print-sizes` prints the generated table without comparing it to the baseline. Combine both options to print and verify the sizes. `-h`, `-help`, and `--help` print the supported options. Its baseline workflow is documented in [Size reduction baseline](SizeReductionBaseline.md).
 
 - `test-js-mangling.sh` verifies optional JavaScript identifier mangling in JavaScript, HTML, and XML input.
 
