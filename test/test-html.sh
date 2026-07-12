@@ -122,4 +122,4 @@ input='<html></html>  '
 expected='<html></html>'
 assert "$expected" "$input"
 
-printf 'Passed all tests\n'
+testSuccess 'Passed all tests'

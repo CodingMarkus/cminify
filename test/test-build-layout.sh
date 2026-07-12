@@ -2,13 +2,14 @@
 
 set -eu
 
+. test/lib/lib-output.sh
+
 binaryPath=${WEBMINCER_BINARY:-./.build/webmincer}
 objectDir=${WEBMINCER_OBJECT_DIR:-./.build/objects}
 
 if [ ! -x "$binaryPath" ]
 then
-	printf 'Expected built binary at %s\n' "$binaryPath" >&2
-	exit 1
+	testFail 'Expected built binary at %s\n' "$binaryPath"
 fi
 
 for objectFile in \
@@ -22,15 +23,13 @@ for objectFile in \
 do
 	if [ ! -f "$objectFile" ]
 	then
-		printf 'Expected object file at %s\n' "$objectFile" >&2
-		exit 1
+		testFail 'Expected object file at %s\n' "$objectFile"
 	fi
 done
 
-if find ./src -name '*.o' -print | grep .
+if find ./src -name '*.o' -print | grep . > /dev/null
 then
-	printf 'Unexpected object files found in ./src\n' >&2
-	exit 1
+	testFail 'Unexpected object files found in ./src\n'
 fi
 
-printf 'Passed the build layout test\n'
+testSuccess 'Passed the build layout test'

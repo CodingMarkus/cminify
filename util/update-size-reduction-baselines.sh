@@ -22,6 +22,7 @@ trap 'rm -rf "$temporaryDirectory"' EXIT HUP INT TERM
 
 if ! (
 	cd "$projectDirectory"
+	WEBMINCER_PRINT_SIZE_REDUCTION_BENCHMARK=1 \
 	WEBMINCER_SKIP_SIZE_REDUCTION_BASELINE_CHECK=1 "$testScript"
 ) > "$testOutput"
 then
@@ -30,38 +31,14 @@ then
 fi
 
 awk -f - "$testOutput" > "$tableFile" <<'AWK'
-	BEGIN {
-		print "| Library | Original bytes | Minified bytes | Reduction |" \
-			" Minified and mangled bytes | Reduction |"
-		print "| --- | ---: | ---: | ---: | ---: | ---: |"
+	/^\| Library \| Original bytes \| Minified bytes \| Reduction \|/ {
+		inTable = 1
 	}
-	/^\.test\/test-js-libs\/.* \(plain\):$/ {
-		file = $1
-		sub(/^\.test\/test-js-libs\//, "", file)
-		mode = "plain"
-		next
-	}
-	/^\.test\/test-js-libs\/.* \(mangled\):$/ {
-		mode = "mangled"
-		next
-	}
-	$1 == "Reduced" && mode == "plain" {
-		plainReduction = $5
-		plainInputSize = $7
-		plainOutputSize = $9
-		next
-	}
-	$1 == "Reduced" && mode == "mangled" {
-		printf "| `%s` | %s | %s | %s | %s | %s |\n", file, \
-			plainInputSize, plainOutputSize, plainReduction, $9, $5
-		mode = ""
+	inTable && /^\|/ {
+		print
 		rows += 1
 	}
-	END {
-		if (rows == 0) {
-			exit 1
-		}
-	}
+	END { exit(rows < 2) }
 AWK
 
 awk -v tableFile="$tableFile" -f - "$sizeReductionDocument" \

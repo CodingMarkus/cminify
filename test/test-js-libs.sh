@@ -2,7 +2,18 @@
 
 set -eu
 
+. test/lib/lib-output.sh
+
 binaryPath=${WEBMINCER_BINARY:-./.build/webmincer}
+benchmark=0
+
+for argument in "$@"
+do
+	if [ "$argument" = "--bench" ]
+	then
+		benchmark=1
+	fi
+done
 
 
 # $1 - URL to download.
@@ -13,12 +24,11 @@ _downloadFile( )
 {
 	if command -v wget > /dev/null 2>&1
 	then
-		wget "$1"
+		wget -q "$1"
 	elif command -v curl > /dev/null 2>&1
 	then
-		curl -LO "$1"
+		curl -fsSLO "$1"
 	else
-		printf '%s\n' "Error: neither wget nor curl is installed." >&2
 		return 1
 	fi
 }
@@ -92,7 +102,7 @@ _download( )
 # $2 - Minification mode.
 # $3 - Output file.
 #
-# Minifies the file and verifies the resulting JavaScript syntax.
+# Minifies the file and verifies the resulting JavaScript syntax and size.
 #
 _testFile( )
 {
@@ -101,16 +111,32 @@ _testFile( )
 	_tf_outputFile=$3
 	_tf_inputSize=$( wc -c < "$_tf_file" | tr -d ' ' ) || return 1
 
-	printf '%s (%s):\n   ' "$_tf_file" "$_tf_mode"
 	if [ "$_tf_mode" = "mangled" ]
 	then
 		"$binaryPath" js "$_tf_file" --mangle \
-			> "$_tf_outputFile" || return 1
+			> "$_tf_outputFile" 2> "$_tf_outputFile.stderr" || {
+			testFail 'Could not minify %s (%s):\n%s' "$_tf_file" \
+				"$_tf_mode" "$(cat "$_tf_outputFile.stderr")"
+		}
 	else
-		"$binaryPath" js "$_tf_file" > "$_tf_outputFile" || return 1
+		"$binaryPath" js "$_tf_file" > "$_tf_outputFile" \
+			2> "$_tf_outputFile.stderr" || {
+			testFail 'Could not minify %s (%s):\n%s' "$_tf_file" \
+				"$_tf_mode" "$(cat "$_tf_outputFile.stderr")"
+		}
 	fi
 	_tf_outputSize=$( wc -c < "$_tf_outputFile" | tr -d ' ' ) || return 1
-	if [ "$_tf_inputSize" = "0" ]
+	if [ "$_tf_outputSize" -gt "$_tf_inputSize" ]
+	then
+		testFail 'Minified output is larger than %s (%s): %s > %s bytes\n' \
+			"$_tf_file" "$_tf_mode" "$_tf_outputSize" "$_tf_inputSize"
+	fi
+	if ! node -c "$_tf_outputFile" > /dev/null 2> "$_tf_outputFile.stderr"
+	then
+		testFail 'Generated JavaScript does not verify for %s (%s):\n%s' \
+			"$_tf_file" "$_tf_mode" "$(cat "$_tf_outputFile.stderr")"
+	fi
+	if [ "$reportBenchmark" = "0" ] || [ "$_tf_inputSize" = "0" ]
 	then
 		_tf_reduction=0.0
 	else
@@ -122,9 +148,6 @@ BEGIN {
 AWK
 		) || return 1
 	fi
-	printf 'Reduced the size by %.1f%% from %s to %s bytes\n' \
-		"$_tf_reduction" "$_tf_inputSize" "$_tf_outputSize"
-	node -c "$_tf_outputFile" || return 1
 	benchmarkInputSize=$_tf_inputSize
 	benchmarkOutputSize=$_tf_outputSize
 	benchmarkReduction=$_tf_reduction
@@ -163,8 +186,6 @@ _assertContainsConsecutiveLines( )
 		}
 AWK
 	then
-		printf 'Expected %s to contain the current benchmark table\n' \
-			"$_accl_actualFile"
 		return 1
 	fi
 }
@@ -175,15 +196,19 @@ AWK
 _main( )
 {
 	_main_tmpDir=$( mktemp -d \
-		"${TMPDIR:-/tmp}/webmincer-js-libs.XXXXXX" ) || return 1
+		"${TMPDIR:-/tmp}/webmincer-js-libs.XXXXXX" ) || testFail \
+		'Could not create a temporary JavaScript library test directory\n'
 	trap 'rm -rf "$_main_tmpDir"' EXIT HUP INT TERM
 	_main_tableFile=$_main_tmpDir/size-reduction-table.md
-	{
-		printf '%s%s\n' \
-			'| Library | Original bytes | Minified bytes | Reduction |' \
-			' Minified and mangled bytes | Reduction |'
-		printf '%s\n' '| --- | ---: | ---: | ---: | ---: | ---: |'
-	} > "$_main_tableFile" || return 1
+	if [ "$reportBenchmark" = "1" ]
+	then
+		{
+			printf '%s%s\n' \
+				'| Library | Original bytes | Minified bytes | Reduction |' \
+				' Minified and mangled bytes | Reduction |'
+			printf '%s\n' '| --- | ---: | ---: | ---: | ---: | ---: |'
+		} > "$_main_tableFile" || return 1
+	fi
 
 	for file in .test/test-js-libs/*.js
 	do
@@ -194,27 +219,55 @@ _main( )
 		plainReduction=$benchmarkReduction
 		_testFile "$file" "mangled" \
 			"$_main_tmpDir/$baseName.mangled.js" || return 1
-		printf '| `%s.js` | %s | %s | %.1f%% | %s | %.1f%% |\n' \
-			"$baseName" "$benchmarkInputSize" "$plainOutputSize" \
-			"$plainReduction" "$benchmarkOutputSize" \
-			"$benchmarkReduction" >> "$_main_tableFile" || return 1
+		if [ "$benchmarkOutputSize" -gt "$plainOutputSize" ]
+		then
+			testFail 'Mangled output is larger than unmangled output for %s: %s > %s bytes\n' \
+				"$file" "$benchmarkOutputSize" \
+				"$plainOutputSize"
+		fi
+		if [ "$reportBenchmark" = "1" ]
+		then
+			# shellcheck disable=SC2016
+			printf '| `%s.js` | %s | %s | %.1f%% | %s | %.1f%% |\n' \
+				"$baseName" "$benchmarkInputSize" "$plainOutputSize" \
+				"$plainReduction" "$benchmarkOutputSize" \
+				"$benchmarkReduction" >> "$_main_tableFile" || return 1
+		fi
 	done
-	if [ "${WEBMINCER_SKIP_SIZE_REDUCTION_BASELINE_CHECK:-}" != "1" ]
+	if [ "$benchmark" = "1" ] && \
+		[ "${WEBMINCER_SKIP_SIZE_REDUCTION_BASELINE_CHECK:-}" != "1" ]
 	then
-		_assertContainsConsecutiveLines "$_main_tableFile" \
-			doc/CurrentSizeReductionBaselines.md || return 1
+		if ! _assertContainsConsecutiveLines "$_main_tableFile" \
+			doc/CurrentSizeReductionBaselines.md
+		then
+			testFail 'Size-reduction benchmark differs from the baseline:\n\n%s' \
+				"$(cat "$_main_tableFile")"
+		fi
 		_main_generatedChart=$_main_tmpDir/JavaScriptLibrarySizeReduction.svg
 		util/generate-size-reduction-chart.sh "$_main_generatedChart" \
-			|| return 1
+			> /dev/null 2> "$_main_tmpDir/chart.stderr" || testFail \
+			'Could not generate the size-reduction chart:\n%s' \
+			"$(cat "$_main_tmpDir/chart.stderr")"
 		if ! cmp -s "$_main_generatedChart" \
 			doc/assets/JavaScriptLibrarySizeReduction.svg
 		then
-			printf 'Expected the SVG chart to match the current benchmark table\n'
-			return 1
+			testFail 'Size-reduction benchmark differs from the baseline:\n\n%s' \
+				"$(cat "$_main_tableFile")"
 		fi
+	fi
+	if [ "${WEBMINCER_PRINT_SIZE_REDUCTION_BENCHMARK:-}" = "1" ]
+	then
+		cat "$_main_tableFile"
 	fi
 }
 
 
-_download
-_main
+reportBenchmark=$benchmark
+if [ "${WEBMINCER_PRINT_SIZE_REDUCTION_BENCHMARK:-}" = "1" ]
+then
+	reportBenchmark=1
+fi
+
+_download || testFail 'Could not download the JavaScript library test files\n'
+_main || testFail 'Could not run the JavaScript library test\n'
+testSuccess 'Passed the JavaScript library test'

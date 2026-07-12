@@ -66,6 +66,16 @@ test: build
 
 
 
+.PHONY: bench
+bench: build
+	for testScript in $(TEST_SCRIPTS); do \
+		WEBMINCER_BINARY=./$(BUILD_DIR)/$(OUTPUT) \
+		WEBMINCER_OBJECT_DIR=./$(BUILD_OBJECT_DIR) \
+		$$testScript --bench || exit 1; \
+	done
+
+
+
 .PHONY: test-debug
 test-debug: debug
 	for testScript in $(TEST_SCRIPTS); do \

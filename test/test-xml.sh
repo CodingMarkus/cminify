@@ -70,4 +70,4 @@ input=' <xml a = " b " > <b>  </b><a /><a b="c"/> </xml>'
 expected=' <xml a=" b "><b> </b><a/><a b="c"/></xml>'
 assert "$expected" "$input" --compact-ws
 
-printf 'Passed all tests\n'
+testSuccess 'Passed all tests'

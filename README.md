@@ -61,6 +61,8 @@ debug, and test builds.
 - `make test` builds the optimized binary and runs all test scripts
   against `.build/webmincer`.
 
+- `make bench` runs the optimized test suite with benchmarking enabled. See [Tests](doc/dev/Tests.md) for details.
+
 - `make test-debug` builds the debug binary and runs all test scripts
   against `.build/debug/webmincer`.
 

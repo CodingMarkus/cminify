@@ -2,9 +2,12 @@
 
 set -eu
 
+. test/lib/lib-output.sh
+
 binaryPath=${WEBMINCER_BINARY:-./.build/webmincer}
 updateReadmeHelpScript=./util/update-readme-help-output.sh
-tmpDir=$( mktemp -d "${TMPDIR:-/tmp}/webmincer-cli.XXXXXX" ) || exit 1
+tmpDir=$( mktemp -d "${TMPDIR:-/tmp}/webmincer-cli.XXXXXX" ) \
+	|| testFail 'Could not create a temporary test directory\n'
 trap 'rm -rf "$tmpDir"' EXIT HUP INT TERM
 
 
@@ -12,18 +15,15 @@ assertStdout( )
 {
 	if ! "$binaryPath" "$@" > "$tmpDir/stdout" 2> "$tmpDir/stderr"
 	then
-		printf 'Command failed unexpectedly: %s %s\n' \
+		testFail 'Command failed unexpectedly: %s %s\n' \
 			"$binaryPath" "$*"
-		exit 1
 	fi
 
 	_as_stderr=$( cat "$tmpDir/stderr" )
 	if [ -n "$_as_stderr" ]
 	then
-		printf 'Unexpected standard error for: %s %s\n' \
-			"$binaryPath" "$*"
-		printf '%s\n' "$_as_stderr"
-		exit 1
+		testFail 'Unexpected standard error for: %s %s\n%s\n' \
+			"$binaryPath" "$*" "$_as_stderr"
 	fi
 }
 
@@ -35,9 +35,8 @@ assertContains( )
 
 	if ! grep -F -- "$_ac_pattern" "$_ac_file" > /dev/null
 	then
-		printf 'Expected to find "%s" in %s\n' "$_ac_pattern" \
+		testFail 'Expected to find "%s" in %s\n' "$_ac_pattern" \
 			"$_ac_file"
-		exit 1
 	fi
 }
 
@@ -48,16 +47,14 @@ assertNoTabsOrLongLines( )
 
 	if grep '	' "$_an_file" > /dev/null
 	then
-		printf 'Found a tab character in %s\n' "$_an_file"
-		exit 1
+		testFail 'Found a tab character in %s\n' "$_an_file"
 	fi
 	if ! awk -f - "$_an_file" <<'AWK'
 length > 80 { exit 1 }
 AWK
 	then
-		printf 'Found a line longer than 80 characters in %s\n' \
+		testFail 'Found a line longer than 80 characters in %s\n' \
 			"$_an_file"
-		exit 1
 	fi
 }
 
@@ -123,8 +120,7 @@ assertReadmeContainsHelpOutput( )
 		}
 AWK
 	then
-		printf 'Expected README.md to contain the complete help output\n'
-		exit 1
+		testFail 'Expected README.md to contain the complete help output\n'
 	fi
 }
 
@@ -169,4 +165,4 @@ assertStdout --version
 assertNoTabsOrLongLines "$tmpDir/version"
 assertContains '1.0' "$tmpDir/version"
 
-printf 'Passed all tests\n'
+testSuccess 'Passed all tests'

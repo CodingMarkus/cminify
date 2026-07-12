@@ -171,4 +171,4 @@ input='function a () {}; function b () {}\n if(true) {} ; a=3'
 expected='function a(){}function b(){}if(!0);a=3'
 assert "$expected" "$input"
 
-printf 'Passed all tests\n'
+testSuccess 'Passed all tests'

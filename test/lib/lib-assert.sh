@@ -2,6 +2,8 @@
 
 set -eu
 
+. test/lib/lib-output.sh
+
 [ -n "${__included_test_assert_sh:-}" ] && return 0
 __included_test_assert_sh=1
 
@@ -17,19 +19,28 @@ assertMinification( )
 	_am_expected=$1
 	_am_input=$2
 	_am_binary=${WEBMINCER_BINARY:-./.build/webmincer}
+	_am_stderrFile=$( mktemp "${TMPDIR:-/tmp}/webmincer-assert.XXXXXX" ) \
+		|| testFail 'Could not create a temporary assertion file\n'
 	shift 2
 
-	if ! _am_result=$( printf '%b' "$_am_input" | "$_am_binary" "$@" )
+	if ! _am_result=$( printf '%b' "$_am_input" | "$_am_binary" "$@" \
+		2> "$_am_stderrFile" )
 	then
-		printf 'Crashed on:\n%s\n' "$_am_input"
-		printf 'Standard output:\n%s\n' "$_am_result"
-		exit 1
+		_am_stderr=$( cat "$_am_stderrFile" )
+		rm -f "$_am_stderrFile"
+		testFail 'Crashed on:\n%s\nStandard output:\n%s\nStandard error:\n%s\n' \
+			"$_am_input" "$_am_result" "$_am_stderr"
+	fi
+	_am_stderr=$( cat "$_am_stderrFile" )
+	rm -f "$_am_stderrFile"
+	if [ -n "$_am_stderr" ]
+	then
+		testFail 'Unexpected standard error:\n%s\n' "$_am_stderr"
 	fi
 
 	if [ "$_am_expected" != "$_am_result" ]
 	then
-		printf 'Error: expected:\n%s\n' "$_am_expected"
-		printf 'got:\n%s\n' "$_am_result"
-		exit 1
+		testFail 'Error: expected:\n%s\ngot:\n%s\n' \
+			"$_am_expected" "$_am_result"
 	fi
 }
