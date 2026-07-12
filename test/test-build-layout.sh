@@ -5,7 +5,7 @@ set -eu
 . test/lib/lib-output.sh
 
 binaryPath=${WEBMINCER_BINARY:-./.build/webmincer}
-objectDir=${WEBMINCER_OBJECT_DIR:-./.build/objects}
+objectDir=${WEBMINCER_OBJECT_DIR:-./.build/obj}
 
 if [ ! -x "$binaryPath" ]
 then

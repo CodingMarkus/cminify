@@ -68,8 +68,8 @@ debug, and test builds.
 
 - `make clean` removes the entire `.build` directory.
 
-Object files are written to `.build/objects` for optimized builds and to
-`.build/debug/objects` for debug builds.
+Object files are written to `.build/obj` for optimized builds and to
+`.build/debug/obj` for debug builds.
 
 Build requirements are a POSIX shell environment, `make`, and a modern C
 compiler. The build uses the `cc` command by default, but you can

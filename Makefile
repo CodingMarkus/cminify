@@ -14,8 +14,8 @@ OUTPUT := webmincer
 
 BUILD_DIR := .build
 DEBUG_BUILD_DIR := $(BUILD_DIR)/debug
-BUILD_OBJECT_DIR := $(BUILD_DIR)/objects
-DEBUG_OBJECT_DIR := $(DEBUG_BUILD_DIR)/objects
+BUILD_OBJECT_DIR := $(BUILD_DIR)/obj
+DEBUG_OBJECT_DIR := $(DEBUG_BUILD_DIR)/obj
 
 SOURCES := $(wildcard src/*.c)
 HEADERS := $(wildcard src/*.h)
