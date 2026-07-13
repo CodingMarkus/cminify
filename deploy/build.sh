@@ -24,6 +24,12 @@ buildTarget( )
 	_targetDir="$buildDir/$_target"
 
 	mkdir -p "$_targetDir"
+	{
+		printf 'Zig version: '
+		zig version
+		printf 'Zig executable SHA-256: '
+		sha256sum "$(command -v zig)" | cut -d ' ' -f 1
+	} > "$_targetDir/build-info.txt"
 	make \
 		BUILD_DIR="$_targetDir" \
 		CC="zig cc -target $_zigTarget" \
@@ -66,24 +72,39 @@ extractWindowsSymbols( )
 archiveTarget( )
 {
 	_target=$1
-	_debugSuffix=${2-}
+	_devSuffix=${2-}
 
-	if [ -n "$_debugSuffix" ]; then
+	case "$_target" in
+		i686-linux-gnu) _archiveName=WebMinCer_Linux-x86 ;;
+		i686-linux-musl) _archiveName=WebMinCer_Linux-x86-static ;;
+		x86_64-linux-gnu) _archiveName=WebMinCer_Linux-x64 ;;
+		x86_64-linux-musl) _archiveName=WebMinCer_Linux-x64-static ;;
+		aarch64-linux-gnu) _archiveName=WebMinCer_Linux-arm64 ;;
+		aarch64-linux-musl) _archiveName=WebMinCer_Linux-arm64-static ;;
+		x86_64-windows-gnu) _archiveName=WebMinCer_Windows-x64 ;;
+		aarch64-windows-gnu) _archiveName=WebMinCer_Windows-arm64 ;;
+		x86_64-macos) _archiveName=WebMinCer_macOS-x64 ;;
+		aarch64-macos) _archiveName=WebMinCer_macOS-arm64 ;;
+		*) echo "Unsupported archive target: $_target" >&2; exit 1 ;;
+	esac
+
+	if [ -n "$_devSuffix" ]; then
 		_archiveContents=$_target
+		_archiveName=$_target$_devSuffix
 	else
 		_archiveContents="$_target/webmincer"
 	fi
 
 	case "$_target" in
 		*-windows-*)
-			if [ -z "$_debugSuffix" ]; then
+			if [ -z "$_devSuffix" ]; then
 				_archiveContents="$_target/webmincer.exe"
 			fi
 			(
 				cd "$buildDir"
-				rm -f "../archive/$_target$_debugSuffix.zip"
+				rm -f "../archive/$_archiveName.zip"
 				zip -9 --quiet --recurse-paths \
-					"../archive/$_target$_debugSuffix.zip" \
+					"../archive/$_archiveName.zip" \
 					"$_archiveContents" \
 					--exclude "$_target/obj/*"
 			)
@@ -91,9 +112,9 @@ archiveTarget( )
 		*)
 			(
 				cd "$buildDir"
-				rm -f "../archive/$_target$_debugSuffix.tar.xz"
+				rm -f "../archive/$_archiveName.tar.xz"
 				tar --create --xz \
-					--file="../archive/$_target$_debugSuffix.tar.xz" \
+					--file="../archive/$_archiveName.tar.xz" \
 					--exclude="$_target/obj" "$_archiveContents"
 			)
 			;;
@@ -129,51 +150,51 @@ buildTarget i686-linux-musl x86-linux-musl -static webmincer
 extractLinuxSymbols "$buildDir/i686-linux-musl/webmincer"
 testStaticLinuxTarget i686-linux-musl qemu-i386
 archiveTarget i686-linux-musl
-archiveTarget i686-linux-musl -debug
+archiveTarget i686-linux-musl -dev
 
 buildTarget i686-linux-gnu x86-linux-gnu '' webmincer
 extractLinuxSymbols "$buildDir/i686-linux-gnu/webmincer"
 archiveTarget i686-linux-gnu
-archiveTarget i686-linux-gnu -debug
+archiveTarget i686-linux-gnu -dev
 
 buildTarget x86_64-linux-musl x86_64-linux-musl -static webmincer
 extractLinuxSymbols "$buildDir/x86_64-linux-musl/webmincer"
 testStaticLinuxTarget x86_64-linux-musl qemu-x86_64
 archiveTarget x86_64-linux-musl
-archiveTarget x86_64-linux-musl -debug
+archiveTarget x86_64-linux-musl -dev
 
 buildTarget x86_64-linux-gnu x86_64-linux-gnu '' webmincer
 extractLinuxSymbols "$buildDir/x86_64-linux-gnu/webmincer"
 archiveTarget x86_64-linux-gnu
-archiveTarget x86_64-linux-gnu -debug
+archiveTarget x86_64-linux-gnu -dev
 
 buildTarget aarch64-linux-musl aarch64-linux-musl -static webmincer
 extractLinuxSymbols "$buildDir/aarch64-linux-musl/webmincer"
 testStaticLinuxTarget aarch64-linux-musl qemu-aarch64
 archiveTarget aarch64-linux-musl
-archiveTarget aarch64-linux-musl -debug
+archiveTarget aarch64-linux-musl -dev
 
 buildTarget aarch64-linux-gnu aarch64-linux-gnu '' webmincer
 extractLinuxSymbols "$buildDir/aarch64-linux-gnu/webmincer"
 archiveTarget aarch64-linux-gnu
-archiveTarget aarch64-linux-gnu -debug
+archiveTarget aarch64-linux-gnu -dev
 
 buildTarget x86_64-windows-gnu x86_64-windows-gnu '' webmincer.exe
 extractWindowsSymbols "$buildDir/x86_64-windows-gnu/webmincer.exe"
 archiveTarget x86_64-windows-gnu
-archiveTarget x86_64-windows-gnu -debug
+archiveTarget x86_64-windows-gnu -dev
 
 buildTarget aarch64-windows-gnu aarch64-windows-gnu '' webmincer.exe
 extractWindowsSymbols "$buildDir/aarch64-windows-gnu/webmincer.exe"
 archiveTarget aarch64-windows-gnu
-archiveTarget aarch64-windows-gnu -debug
+archiveTarget aarch64-windows-gnu -dev
 
 buildTarget x86_64-macos x86_64-macos '' webmincer
 extractMacosSymbols "$buildDir/x86_64-macos/webmincer"
 archiveTarget x86_64-macos
-archiveTarget x86_64-macos -debug
+archiveTarget x86_64-macos -dev
 
 buildTarget aarch64-macos aarch64-macos '' webmincer
 extractMacosSymbols "$buildDir/aarch64-macos/webmincer"
 archiveTarget aarch64-macos
-archiveTarget aarch64-macos -debug
+archiveTarget aarch64-macos -dev

@@ -25,7 +25,7 @@ Build output is written to `.deploy/build/<target>`. Release archives are writte
 
 Linux musl releases are statically linked. Linux GNU releases are dynamically linked against glibc. Windows releases use the GNU Windows target supplied by Zig.
 
-Each target has a binary-only archive using the target name and a debuggable archive using the `-debug` suffix. Each target directory contains the release binary, its separate debugging symbols, and an `obj/` directory with build object files. Linux and macOS archives use the `.tar.xz` format. Windows archives use the `.zip` format. Archives exclude `obj/`. Binary-only archives contain only the release binary. Debug archives include the release binary and debugging symbols.
+Binary-only archives use friendly names such as `WebMinCer_Linux-x64.tar.xz` and `WebMinCer_Windows-arm64.zip`. Static Linux builds add the `-static` suffix. Developer archives retain the technical target name and use the `-dev` suffix. Each target directory contains the release binary, its separate debugging symbols, a `build-info.txt` file, and an `obj/` directory with build object files. Linux and macOS archives use the `.tar.xz` format. Windows archives use the `.zip` format. Archives exclude `obj/`. Binary-only archives contain only the release binary. Developer archives include the release binary, debugging symbols, and build information.
 
 ELF releases use `.debug` files and GNU debug links. macOS releases use a `.dSYM` bundle. Windows releases use both `.debug` files and PDB files.
 
