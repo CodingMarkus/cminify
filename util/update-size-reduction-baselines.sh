@@ -11,7 +11,7 @@ scriptDirectory=$(CDPATH='' cd "$(dirname "$0")" && pwd)
 projectDirectory=$(CDPATH='' cd "$scriptDirectory/.." && pwd)
 sizeReductionDocument=$projectDirectory/doc/CurrentSizeReductionBaselines.md
 chartUtility=$projectDirectory/util/generate-size-reduction-chart.sh
-testScript=$projectDirectory/test/stage4/test-js-libs.sh
+testScript=$projectDirectory/test/stage3/test-js-libs.sh
 temporaryDirectory=$(mktemp -d \
 	"${TMPDIR:-/tmp}/webmincer-size-reduction.XXXXXX")
 testOutput=$temporaryDirectory/test-output

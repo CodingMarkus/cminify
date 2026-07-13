@@ -7,7 +7,7 @@ set -eu
 binaryPath=${WEBMINCER_BINARY:-./.build/webmincer}
 benchmark=0
 printSizes=0
-testDataDir=.test/stage4/test-js-libs
+testDataDir=.test/stage3/test-js-libs
 
 if command -v bun > /dev/null 2>&1
 then

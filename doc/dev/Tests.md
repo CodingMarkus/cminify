@@ -58,12 +58,12 @@ The Makefile discovers `test-*.sh` scripts in `test/stage*/` and runs them in st
 
 ### Stage 3
 
-- `test-random-input.sh` sends random input to every supported format and verifies that invalid input reports an error instead of crashing.
+- `test-js-libs.sh` minifies pinned third-party JavaScript libraries and validates the generated JavaScript. It also fails if either output grows beyond its input, or if mangling makes the output bigger than normal minification. With `--bench`, it verifies the size-reduction baseline. `--print-sizes` prints the generated table without comparing it to the baseline. Combine both options to print and verify the sizes. `-h`, `-help`, and `--help` print the supported options. Its baseline workflow is documented in [Size reduction baseline](SizeReductionBaseline.md).
 
 
 ### Stage 4
 
-- `test-js-libs.sh` minifies pinned third-party JavaScript libraries and validates the generated JavaScript. It also fails if either output grows beyond its input, or if mangling makes the output bigger than normal minification. With `--bench`, it verifies the size-reduction baseline. `--print-sizes` prints the generated table without comparing it to the baseline. Combine both options to print and verify the sizes. `-h`, `-help`, and `--help` print the supported options. Its baseline workflow is documented in [Size reduction baseline](SizeReductionBaseline.md).
+- `test-random-input.sh` sends random input to every supported format and verifies that invalid input reports an error instead of crashing.
 
 
 Shared test helpers
