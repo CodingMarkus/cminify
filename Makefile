@@ -19,7 +19,7 @@ DEBUG_OBJECT_DIR := $(DEBUG_BUILD_DIR)/obj
 
 SOURCES := $(wildcard src/*.c)
 HEADERS := $(wildcard src/*.h)
-TEST_SCRIPTS := $(wildcard test/test-*.sh)
+TEST_SCRIPTS := $(wildcard test/stage*/test-*.sh)
 
 BUILD_OBJECTS := $(patsubst src/%.c,$(BUILD_OBJECT_DIR)/%.o,$(SOURCES))
 DEBUG_OBJECTS := $(patsubst src/%.c,$(DEBUG_OBJECT_DIR)/%.o,$(SOURCES))

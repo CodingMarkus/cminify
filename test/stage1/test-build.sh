@@ -12,15 +12,10 @@ then
 	testFail 'Expected built binary at %s\n' "$binaryPath"
 fi
 
-for objectFile in \
-	"$objectDir"/js-mangler.o \
-	"$objectDir"/minifier-common.o \
-	"$objectDir"/minifier-css.o \
-	"$objectDir"/minifier-js.o \
-	"$objectDir"/minifier-json.o \
-	"$objectDir"/minifier-xml-html.o \
-	"$objectDir"/webmincer.o
+for sourceFile in ./src/*.c
 do
+	sourceName=${sourceFile##*/}
+	objectFile=$objectDir/${sourceName%.c}.o
 	if [ ! -f "$objectFile" ]
 	then
 		testFail 'Expected object file at %s\n' "$objectFile"

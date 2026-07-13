@@ -7,6 +7,7 @@ set -eu
 binaryPath=${WEBMINCER_BINARY:-./.build/webmincer}
 benchmark=0
 printSizes=0
+testDataDir=.test/stage4/test-js-libs
 
 if command -v bun > /dev/null 2>&1
 then
@@ -75,7 +76,7 @@ _downloadFile( )
 #
 _download( )
 {
-	_d_testDir=.test/test-js-libs
+	_d_testDir=$testDataDir
 	mkdir -p "$_d_testDir" || return 1
 
 	(
@@ -265,7 +266,7 @@ _main( )
 		} > "$_main_tableFile" || return 1
 	fi
 
-	for file in .test/test-js-libs/*.js
+	for file in "$testDataDir"/*.js
 	do
 		baseName=$( basename "$file" .js )
 		_testFile "$file" "plain" "$_main_tmpDir/$baseName.min.js" \
