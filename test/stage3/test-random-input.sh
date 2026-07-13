@@ -8,33 +8,37 @@ export LC_CTYPE=C
 export LC_ALL=C
 
 outputPath=${WEBMINCER_BINARY:-./.build/webmincer}
-tmpInput=$( mktemp "${TMPDIR:-/tmp}/webmincer-random-input.XXXXXX" ) \
-	|| testFail 'Could not create a temporary test file\n'
-trap 'rm -f "$tmpInput"' EXIT HUP INT TERM
+tmpDir=$( mktemp -d "${TMPDIR:-/tmp}/webmincer-random-input.XXXXXX" ) \
+	|| testFail 'Could not create a temporary directory\n'
+trap 'rm -rf "$tmpDir"' EXIT HUP INT TERM
+
+sampleCount=1001
+sampleLength=1000
+randomInputPath="$tmpDir/random-input"
 
 for format in css js xml html json
 do
-	i=0
-	while [ "$i" -le 1000 ]
+	LC_ALL=C tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' \
+		< /dev/urandom | head -c $((sampleCount * sampleLength)) \
+		> "$randomInputPath"
+	split -a 4 -b "$sampleLength" "$randomInputPath" "$tmpDir/input-"
+	for inputPath in "$tmpDir"/input-*
 	do
-		input=$( LC_ALL=C tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' \
-			< /dev/urandom | head -c 1000 )
-		printf '%s' "$input" > "$tmpInput"
-		if "$outputPath" "$format" "$tmpInput" > /dev/null 2>&1
+		if "$outputPath" "$format" "$inputPath" > /dev/null 2>&1
 		then
 			:
 		else
 			exitStatus=$?
 			if [ "$exitStatus" -gt 1 ]
 			then
-				printf '%s' "$input" > input-causing-crash.txt
+				cp "$inputPath" input-causing-crash.txt
 				testFail \
 					'Crash to reproduce: webmincer %s input-causing-crash.txt\n' \
 					"$format"
 			fi
 		fi
-		i=$((i + 1))
 	done
+	rm -f "$tmpDir"/input-*
 done
 
 testSuccess
