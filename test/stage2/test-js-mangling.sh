@@ -1,80 +1,94 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
-assert()
+set -eu
+
+. test/lib/lib-assert.sh
+
+
+# $1 - Expected minified output.
+# $2 - Input to minify.
+#
+# Verifies JavaScript minification with identifier mangling.
+#
+assert( )
 {
-	result="$(printf '%b' "$2" | ./build/cminify js - --mangle-js-identifiers)"
-	if [ "$?" != "0" ]; then
-		echo Crashed on:
-		echo "$2"
-		echo Standard output:
-		echo "$result"
-		exit 1
-	elif [ "$1" != "$result" ]; then
-		echo 'Error: expected:'
-		echo "$1"
-		echo got:
-		echo "$result"
-		exit 1
+	assertMinification "$1" "$2" js - --mangle
+}
+
+
+# $1 - First expected minified output.
+# $2 - Second expected minified output.
+# $3 - Input to minify.
+#
+# Verifies JavaScript minification with identifier mangling.
+#
+assertEither( )
+{
+	_ae_firstExpected=$1
+	_ae_secondExpected=$2
+	_ae_input=$3
+	_ae_binary=${WEBMINCER_BINARY:-./.build/webmincer}
+	_ae_stderrFile=$( mktemp \
+		"${TMPDIR:-/tmp}/webmincer-assert.XXXXXX" ) \
+		|| testFail 'Could not create a temporary assertion file\n'
+	if ! _ae_actual=$( printf '%b' "$_ae_input" \
+		| "$_ae_binary" js - --mangle 2> "$_ae_stderrFile" )
+	then
+		_ae_stderr=$( cat "$_ae_stderrFile" )
+		rm -f "$_ae_stderrFile"
+		testFail 'Crashed on:\n%s\nStandard output:\n%s\nStandard error:\n%s\n' \
+			"$_ae_input" "$_ae_actual" "$_ae_stderr"
+	fi
+	_ae_stderr=$( cat "$_ae_stderrFile" )
+	rm -f "$_ae_stderrFile"
+	if [ -n "$_ae_stderr" ]
+	then
+		testFail 'Unexpected standard error:\n%s\n' "$_ae_stderr"
+	fi
+	if [ "$_ae_actual" != "$_ae_firstExpected" ] \
+		&& [ "$_ae_actual" != "$_ae_secondExpected" ]
+	then
+		testFail 'Output differs:\nExpected one of: [%s], [%s]\nActual:   [%s]\n' \
+			"$_ae_firstExpected" "$_ae_secondExpected" "$_ae_actual"
 	fi
 }
 
-assert_without_mangling()
+
+# $1 - Expected minified output.
+# $2 - Input to minify.
+#
+# Verifies JavaScript minification without identifier mangling.
+#
+assertWithoutMangling( )
 {
-	result="$(printf '%b' "$2" | ./build/cminify js -)"
-	if [ "$?" != "0" ]; then
-		echo Crashed on:
-		echo "$2"
-		echo Standard output:
-		echo "$result"
-		exit 1
-	elif [ "$1" != "$result" ]; then
-		echo 'Error: expected:'
-		echo "$1"
-		echo got:
-		echo "$result"
-		exit 1
-	fi
+	assertMinification "$1" "$2" js -
 }
 
-assert_html()
+
+# $1 - Expected minified output.
+# $2 - Input to minify.
+#
+# Verifies HTML minification with identifier mangling.
+#
+assertHTML( )
 {
-	result="$(printf '%b' "$2" | ./build/cminify html - --mangle-js-identifiers)"
-	if [ "$?" != "0" ]; then
-		echo Crashed on:
-		echo "$2"
-		echo Standard output:
-		echo "$result"
-		exit 1
-	elif [ "$1" != "$result" ]; then
-		echo 'Error: expected:'
-		echo "$1"
-		echo got:
-		echo "$result"
-		exit 1
-	fi
+	assertMinification "$1" "$2" html - --mangle
 }
 
-assert_xml()
+
+# $1 - Expected minified output.
+# $2 - Input to minify.
+#
+# Verifies XML minification with identifier mangling.
+#
+assertXML( )
 {
-	result="$(printf '%b' "$2" | ./build/cminify xml - --mangle-js-identifiers)"
-	if [ "$?" != "0" ]; then
-		echo Crashed on:
-		echo "$2"
-		echo Standard output:
-		echo "$result"
-		exit 1
-	elif [ "$1" != "$result" ]; then
-		echo 'Error: expected:'
-		echo "$1"
-		echo got:
-		echo "$result"
-		exit 1
-	fi
+	assertMinification "$1" "$2" xml - --mangle
 }
 
 input='function demo(longName){return longName}'
 expected='function demo(longName){return longName}'
-assert_without_mangling "$expected" "$input"
+assertWithoutMangling "$expected" "$input"
 
 input='function demo(longName){return longName}'
 expected='function demo(a){return a}'
@@ -449,7 +463,9 @@ assert "$expected" "$input"
 input='function demo(longName){function innerName(otherName)'\
 '{let localName=otherName;return localName}return innerName(longName)}'
 expected='function demo(a){function b(a){let b=a;return b}return b(a)}'
-assert "$expected" "$input"
+alternativeExpected='function demo(a){function b(a){let c=a;return c}'\
+'return b(a)}'
+assertEither "$expected" "$alternativeExpected" "$input"
 
 input='function demo(longName){function innerName(otherName)'\
 '{return innerName(longName)+otherName}return innerName(1)}'
@@ -477,7 +493,9 @@ input='function demo(longName){return ()=>longName}'
 expected='function demo(longName){return()=>longName}'
 assert "$expected" "$input"
 
+# shellcheck disable=SC2016
 input='function demo(longName){return `${longName}`}'
+# shellcheck disable=SC2016
 expected='function demo(longName){return`${longName}`}'
 assert "$expected" "$input"
 
@@ -494,7 +512,8 @@ input='function(module,exports,__webpack_require__)'\
 expected='function(a,b,c){return a+b+c}'
 assert "$expected" "$input"
 
-input='function demo(){var objectValue={};var returnValue=1;return objectValue={},returnValue}'
+input='function demo(){var objectValue={};var returnValue=1;'\
+'return objectValue={},returnValue}'
 expected='function demo(){var a={};var b=1;return a={},b}'
 assert "$expected" "$input"
 
@@ -538,17 +557,17 @@ assert "$expected" "$input"
 input='<script>function demo(longName){let otherName=longName+1;'\
 'return otherName}</script>'
 expected='<script>function demo(a){let b=a+1;return b}</script>'
-assert_html "$expected" "$input"
+assertHTML "$expected" "$input"
 
 input='<script type=module>const moduleGlobal=1;function demo(longName)'\
 '{return moduleGlobal+longName}</script>'
 expected='<script type=module>const G0=1;function demo(a){return G0+a}'\
 '</script>'
-assert_html "$expected" "$input"
+assertHTML "$expected" "$input"
 
 input='<script><![CDATA[ function demo(longName){let otherName=longName+1;'\
 'return otherName} ]]></script>'
 expected='<script>function demo(a){let b=a+1;return b}</script>'
-assert_xml "$expected" "$input"
+assertXML "$expected" "$input"
 
-echo 'Passed all tests'
+testSuccess

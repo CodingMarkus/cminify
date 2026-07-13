@@ -1,47 +1,124 @@
-COMPILER ?= cc
-CC ?= $(COMPILER)
-CFLAGS ?= -O2 -g -Wall -Wextra -Wno-unused-parameter
-ifndef CROSS_TRIPLE
-	OUTPUT := cminify
-else ifeq '$(CROSS_TRIPLE)' 'x86_64-w64-mingw32'
-	OUTPUT := cminify_$(CROSS_TRIPLE).exe
-else
-	OUTPUT := cminify_$(CROSS_TRIPLE)
-endif
+CC ?= cc
+LDFLAGS ?=
+
+BASE_CFLAGS ?= \
+	-Werror \
+	-Wall \
+	-Wextra \
+	-Wno-unused-parameter \
+	-Wconversion \
+	-Wsign-conversion
+BUILD_CFLAGS ?= -Os -g
+DEBUG_CFLAGS ?= -O0 -g
+
+OUTPUT := webmincer
+
+BUILD_DIR := .build
+DEBUG_BUILD_DIR := $(BUILD_DIR)/debug
+BUILD_OBJECT_DIR := $(BUILD_DIR)/obj
+DEBUG_OBJECT_DIR := $(DEBUG_BUILD_DIR)/obj
+
+SOURCES := $(wildcard src/*.c)
+HEADERS := $(wildcard src/*.h)
+TEST_SCRIPTS ?= $(wildcard test/stage*/test-*.sh)
+
+BUILD_OBJECTS := $(patsubst src/%.c,$(BUILD_OBJECT_DIR)/%.o,$(SOURCES))
+DEBUG_OBJECTS := $(patsubst src/%.c,$(DEBUG_OBJECT_DIR)/%.o,$(SOURCES))
+
+TEST_BINARY ?= ./$(BUILD_DIR)/$(OUTPUT)
+TEST_OBJECT_DIR ?= ./$(BUILD_OBJECT_DIR)
+DEBUG_TEST_BINARY ?= ./$(DEBUG_BUILD_DIR)/$(OUTPUT)
+DEBUG_TEST_OBJECT_DIR ?= ./$(DEBUG_OBJECT_DIR)
+
+DEPLOY_IMAGE ?= webmincer-deploy
+
+
 
 .PHONY: build
-build: build/$(OUTPUT)
+build: $(BUILD_DIR)/$(OUTPUT)
 
-build/$(OUTPUT): cminify.c
-	mkdir -p build
-	$(CC) $(CFLAGS) -o build/$(OUTPUT) cminify.c
+$(BUILD_DIR)/$(OUTPUT): $(BUILD_OBJECTS) | $(BUILD_DIR)
+	$(CC) $(BASE_CFLAGS) $(BUILD_CFLAGS) $(LDFLAGS) -o $@ $(BUILD_OBJECTS)
 
-.PHONY: strip
-strip: build/$(OUTPUT)
-	strip build/$(OUTPUT)
+$(BUILD_OBJECT_DIR)/%.o: src/%.c $(HEADERS) | $(BUILD_DIR)
+	mkdir -p $(dir $@)
+	$(CC) $(BASE_CFLAGS) $(BUILD_CFLAGS) -c -o $@ $<
+
+$(DEBUG_OBJECT_DIR)/%.o: src/%.c $(HEADERS) | $(DEBUG_BUILD_DIR)
+	mkdir -p $(dir $@)
+	$(CC) $(BASE_CFLAGS) $(DEBUG_CFLAGS) -c -o $@ $<
+
+$(DEBUG_BUILD_DIR)/$(OUTPUT): $(DEBUG_OBJECTS) | $(DEBUG_BUILD_DIR)
+	$(CC) $(BASE_CFLAGS) $(DEBUG_CFLAGS) $(LDFLAGS) -o $@ $(DEBUG_OBJECTS)
+
+$(BUILD_DIR):
+	mkdir -p $@
+
+
+
+.PHONY: debug
+debug: $(DEBUG_BUILD_DIR)/$(OUTPUT)
+
+$(DEBUG_BUILD_DIR):
+	mkdir -p $@
+
+
 
 .PHONY: test
 test: build
-	./test-xml.sh
-	./test-css.sh
-	./test-html.sh
-	./test-js.sh
-	./test-js-mangling.sh
-	./test-js-libs.sh
+	@for testScript in $(TEST_SCRIPTS); do \
+		WEBMINCER_BINARY="$(TEST_BINARY)" \
+		WEBMINCER_OBJECT_DIR="$(TEST_OBJECT_DIR)" \
+		$$testScript || exit 1; \
+	done
 
-.PHONY: check
-check:
-	cppcheck --enable=all --suppress=missingIncludeSystem --check-level=exhaustive cminify.c
+
+
+.PHONY: bench
+bench: build
+	@for testScript in $(TEST_SCRIPTS); do \
+		WEBMINCER_BINARY="$(TEST_BINARY)" \
+		WEBMINCER_OBJECT_DIR="$(TEST_OBJECT_DIR)" \
+		$$testScript --bench || exit 1; \
+	done
+
+
+
+.PHONY: test-debug
+test-debug: debug
+	@for testScript in $(TEST_SCRIPTS); do \
+		WEBMINCER_BINARY="$(DEBUG_TEST_BINARY)" \
+		WEBMINCER_OBJECT_DIR="$(DEBUG_TEST_OBJECT_DIR)" \
+		$$testScript || exit 1; \
+	done
+
+
+
+.PHONY: deploy
+deploy:
+	docker build -t $(DEPLOY_IMAGE) -f deploy/Dockerfile deploy
+	docker run --rm -v "$(CURDIR):/proj" -w /proj $(DEPLOY_IMAGE) \
+		deploy/build.sh
+
+
 
 .PHONY: clean
 clean:
-	rm -rf build
+	rm -rf $(BUILD_DIR)
 
-.PHONY: crossbuild
-crossbuild:
-	docker run -e CROSS_TRIPLE=x86_64-w64-mingw32 \
-		-v $$(pwd):/workdir:z -u $$(id -u):$$(id -g) multiarch/crossbuild make && \
-	docker run -e CROSS_TRIPLE=x86_64-apple-darwin \
-	-v $$(pwd):/workdir:z -u $$(id -u):$$(id -g) multiarch/crossbuild make
-	docker run -e CROSS_TRIPLE=x86_64-linux-gnu \
-		-v $$(pwd):/workdir:z -u $$(id -u):$$(id -g) multiarch/crossbuild make
+
+
+.PHONY: test-clean
+test-clean:
+	rm -rf .test
+
+
+
+.PHONY: deploy-clean
+deploy-clean:
+	rm -rf .deploy
+
+
+
+.PHONY: clean-all
+clean-all: clean test-clean deploy-clean

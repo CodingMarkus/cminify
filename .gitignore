@@ -1,5 +1,8 @@
-archive
-example.*
-build
-input-causing-crash.txt
-test-js-libs
+# Build artifacts.
+.build
+
+# Deployment artifacts.
+.deploy
+
+# Temporary test files.
+.test

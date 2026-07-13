@@ -1,19 +1,21 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
-assert()
+set -eu
+
+. test/lib/lib-assert.sh
+
+
+# $1 - Expected minified output.
+# $2 - Input to minify.
+#
+# Verifies HTML minification.
+#
+assert( )
 {
-	result="$(printf '%b' "$2" | ./build/cminify html -)"
-	if [ "$?" != "0" ]; then
-		echo 'Crashed on:'
-		echo "$2"
-		exit 1
-	elif [ "$1" != "$result" ]; then
-		echo 'Error: expected:'
-		echo "$1"
-		echo 'got:'
-		echo "$result"
-		exit 1
-	fi
+	_am_expected=$1
+	_am_input=$2
+	shift 2
+	assertMinification "$_am_expected" "$_am_input" html - "$@"
 }
 
 input='<script>"<"+"/script>"</script>'
@@ -29,8 +31,28 @@ expected='<script>a="<\/script>"</script>'
 assert "$expected" "$input"
 
 input='  a  b  '
-expected=' a b '
+expected='  a  b  '
 assert "$expected" "$input"
+
+input='  a  b  '
+expected=' a b '
+assert "$expected" "$input" --compact-ws
+
+input='<div>  text  <span>  more  </span>  </div>'
+expected='<div>  text  <span>  more  </span>  </div>'
+assert "$expected" "$input"
+
+input='<div>  text  <span>  more  </span>  </div>'
+expected='<div> text <span>more </span></div>'
+assert "$expected" "$input" --compact-ws
+
+input='<pre>  text  </pre>'
+expected='<pre>  text  </pre>'
+assert "$expected" "$input"
+
+input='<pre>  text  </pre>'
+expected='<pre> text </pre>'
+assert "$expected" "$input" --compact-ws
 
 input='<scrIpT TyPe=application/json&plus;ld> { "key" : true } </script>'
 expected='<scrIpT TyPe=application/json&plus;ld>{"key":true}</script>'
@@ -85,11 +107,19 @@ expected='<html></html>'
 assert "$expected" "$input"
 
 input='<html> <html> </html> <html> </html> </html>'
-expected='<html> <html></html> <html></html> </html>'
+expected='<html> <html> </html> <html> </html> </html>'
 assert "$expected" "$input"
+
+input='<html> <html> </html> <html> </html> </html>'
+expected='<html> <html></html> <html></html> </html>'
+assert "$expected" "$input" --compact-ws
 
 input='<html>  <!---->'
-expected='<html> '
+expected='<html>  '
 assert "$expected" "$input"
 
-echo 'Passed all tests'
+input='<html></html>  '
+expected='<html></html>'
+assert "$expected" "$input"
+
+testSuccess
