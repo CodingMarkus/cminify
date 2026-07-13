@@ -1,4 +1,5 @@
 CC ?= cc
+LDFLAGS ?=
 
 BASE_CFLAGS ?= \
 	-Werror \
@@ -19,10 +20,17 @@ DEBUG_OBJECT_DIR := $(DEBUG_BUILD_DIR)/obj
 
 SOURCES := $(wildcard src/*.c)
 HEADERS := $(wildcard src/*.h)
-TEST_SCRIPTS := $(wildcard test/stage*/test-*.sh)
+TEST_SCRIPTS ?= $(wildcard test/stage*/test-*.sh)
 
 BUILD_OBJECTS := $(patsubst src/%.c,$(BUILD_OBJECT_DIR)/%.o,$(SOURCES))
 DEBUG_OBJECTS := $(patsubst src/%.c,$(DEBUG_OBJECT_DIR)/%.o,$(SOURCES))
+
+TEST_BINARY ?= ./$(BUILD_DIR)/$(OUTPUT)
+TEST_OBJECT_DIR ?= ./$(BUILD_OBJECT_DIR)
+DEBUG_TEST_BINARY ?= ./$(DEBUG_BUILD_DIR)/$(OUTPUT)
+DEBUG_TEST_OBJECT_DIR ?= ./$(DEBUG_OBJECT_DIR)
+
+DEPLOY_IMAGE ?= webmincer-deploy
 
 
 
@@ -30,7 +38,7 @@ DEBUG_OBJECTS := $(patsubst src/%.c,$(DEBUG_OBJECT_DIR)/%.o,$(SOURCES))
 build: $(BUILD_DIR)/$(OUTPUT)
 
 $(BUILD_DIR)/$(OUTPUT): $(BUILD_OBJECTS) | $(BUILD_DIR)
-	$(CC) $(BASE_CFLAGS) $(BUILD_CFLAGS) -o $@ $(BUILD_OBJECTS)
+	$(CC) $(BASE_CFLAGS) $(BUILD_CFLAGS) $(LDFLAGS) -o $@ $(BUILD_OBJECTS)
 
 $(BUILD_OBJECT_DIR)/%.o: src/%.c $(HEADERS) | $(BUILD_DIR)
 	mkdir -p $(dir $@)
@@ -41,7 +49,7 @@ $(DEBUG_OBJECT_DIR)/%.o: src/%.c $(HEADERS) | $(DEBUG_BUILD_DIR)
 	$(CC) $(BASE_CFLAGS) $(DEBUG_CFLAGS) -c -o $@ $<
 
 $(DEBUG_BUILD_DIR)/$(OUTPUT): $(DEBUG_OBJECTS) | $(DEBUG_BUILD_DIR)
-	$(CC) $(BASE_CFLAGS) $(DEBUG_CFLAGS) -o $@ $(DEBUG_OBJECTS)
+	$(CC) $(BASE_CFLAGS) $(DEBUG_CFLAGS) $(LDFLAGS) -o $@ $(DEBUG_OBJECTS)
 
 $(BUILD_DIR):
 	mkdir -p $@
@@ -59,8 +67,8 @@ $(DEBUG_BUILD_DIR):
 .PHONY: test
 test: build
 	@for testScript in $(TEST_SCRIPTS); do \
-		WEBMINCER_BINARY=./$(BUILD_DIR)/$(OUTPUT) \
-		WEBMINCER_OBJECT_DIR=./$(BUILD_OBJECT_DIR) \
+		WEBMINCER_BINARY="$(TEST_BINARY)" \
+		WEBMINCER_OBJECT_DIR="$(TEST_OBJECT_DIR)" \
 		$$testScript || exit 1; \
 	done
 
@@ -69,8 +77,8 @@ test: build
 .PHONY: bench
 bench: build
 	@for testScript in $(TEST_SCRIPTS); do \
-		WEBMINCER_BINARY=./$(BUILD_DIR)/$(OUTPUT) \
-		WEBMINCER_OBJECT_DIR=./$(BUILD_OBJECT_DIR) \
+		WEBMINCER_BINARY="$(TEST_BINARY)" \
+		WEBMINCER_OBJECT_DIR="$(TEST_OBJECT_DIR)" \
 		$$testScript --bench || exit 1; \
 	done
 
@@ -79,13 +87,38 @@ bench: build
 .PHONY: test-debug
 test-debug: debug
 	@for testScript in $(TEST_SCRIPTS); do \
-		WEBMINCER_BINARY=./$(DEBUG_BUILD_DIR)/$(OUTPUT) \
-		WEBMINCER_OBJECT_DIR=./$(DEBUG_OBJECT_DIR) \
+		WEBMINCER_BINARY="$(DEBUG_TEST_BINARY)" \
+		WEBMINCER_OBJECT_DIR="$(DEBUG_TEST_OBJECT_DIR)" \
 		$$testScript || exit 1; \
 	done
+
+
+
+.PHONY: deploy
+deploy:
+	docker build -t $(DEPLOY_IMAGE) -f deploy/Dockerfile deploy
+	docker run --rm -v "$(CURDIR):/proj" -w /proj $(DEPLOY_IMAGE) \
+		deploy/build.sh
 
 
 
 .PHONY: clean
 clean:
 	rm -rf $(BUILD_DIR)
+
+
+
+.PHONY: test-clean
+test-clean:
+	rm -rf .test
+
+
+
+.PHONY: deploy-clean
+deploy-clean:
+	rm -rf .deploy
+
+
+
+.PHONY: clean-all
+clean-all: clean test-clean deploy-clean

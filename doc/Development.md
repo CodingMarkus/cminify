@@ -11,6 +11,8 @@ Development documents
 
 - [Utilities](dev/Utilities.md) provides a short overview of the development utilities.
 
+- [Deployment](dev/Deploy.md) explains cross-platform release builds.
+
 - [Minification](Minification.md) describes the supported minification behavior and its scope.
 
 - [JavaScript Identifier Mangling](JSMangler.md) describes optional JavaScript identifier mangling.

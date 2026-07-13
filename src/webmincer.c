@@ -237,7 +237,8 @@ int main( int argc, const char * argv[] )
 		size_t strlenInput = strlen(input);
 		size_t strlenMinification = strlen(m.result);
 		printf("Reduced the size by %.1f%% from %zu to %zu bytes\n",
-			   100.0 - 100.0 * strlenMinification / strlenInput,
+			   100.0 - 100.0 * (double)strlenMinification
+				   / (double)strlenInput,
 			   strlenInput,
 			   strlenMinification);
 	} else {

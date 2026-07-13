@@ -27,6 +27,8 @@ The scripts use the normal shell `PATH` to locate required commands, including `
 
 Tests with persistent test data store it in `.test/stageX/test-name/`, matching the test's stage and name.
 
+Run `make test-clean` to remove the persistent test data.
+
 
 Test stages
 -----------

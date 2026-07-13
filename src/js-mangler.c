@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 struct JsMangleEdit {
 	size_t start;
@@ -549,12 +550,12 @@ static bool jsMangleTokenEquals(
 }
 
 
-static size_t jsMangleNameHash( const char * name, size_t length )
+static uint32_t jsMangleNameHash( const char * name, size_t length )
 {
-	size_t hash = 1469598103934665603ull;
+	uint32_t hash = UINT32_C(2166136261);
 	for (size_t i = 0; i < length; ++i) {
 		hash ^= (unsigned char)name[i];
-		hash *= 1099511628211ull;
+		hash *= UINT32_C(16777619);
 	}
 	return (hash);
 }

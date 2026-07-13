@@ -1,5 +1,8 @@
 # Build artifacts.
 .build
 
+# Deployment artifacts.
+.deploy
+
 # Temporary test files.
 .test

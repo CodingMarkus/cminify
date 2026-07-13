@@ -72,6 +72,12 @@ debug, and test builds.
 
 - `make clean` removes the entire `.build` directory.
 
+- `make test-clean` removes the persistent `.test` test-data directory.
+
+- `make deploy-clean` removes the entire `.deploy` directory.
+
+- `make clean-all` removes `.build`, `.test`, and `.deploy`.
+
 Object files are written to `.build/obj` for optimized builds and to
 `.build/debug/obj` for debug builds.
 

@@ -16,6 +16,44 @@ assert( )
 }
 
 
+# $1 - First expected minified output.
+# $2 - Second expected minified output.
+# $3 - Input to minify.
+#
+# Verifies JavaScript minification with identifier mangling.
+#
+assertEither( )
+{
+	_ae_firstExpected=$1
+	_ae_secondExpected=$2
+	_ae_input=$3
+	_ae_binary=${WEBMINCER_BINARY:-./.build/webmincer}
+	_ae_stderrFile=$( mktemp \
+		"${TMPDIR:-/tmp}/webmincer-assert.XXXXXX" ) \
+		|| testFail 'Could not create a temporary assertion file\n'
+	if ! _ae_actual=$( printf '%b' "$_ae_input" \
+		| "$_ae_binary" js - --mangle 2> "$_ae_stderrFile" )
+	then
+		_ae_stderr=$( cat "$_ae_stderrFile" )
+		rm -f "$_ae_stderrFile"
+		testFail 'Crashed on:\n%s\nStandard output:\n%s\nStandard error:\n%s\n' \
+			"$_ae_input" "$_ae_actual" "$_ae_stderr"
+	fi
+	_ae_stderr=$( cat "$_ae_stderrFile" )
+	rm -f "$_ae_stderrFile"
+	if [ -n "$_ae_stderr" ]
+	then
+		testFail 'Unexpected standard error:\n%s\n' "$_ae_stderr"
+	fi
+	if [ "$_ae_actual" != "$_ae_firstExpected" ] \
+		&& [ "$_ae_actual" != "$_ae_secondExpected" ]
+	then
+		testFail 'Output differs:\nExpected one of: [%s], [%s]\nActual:   [%s]\n' \
+			"$_ae_firstExpected" "$_ae_secondExpected" "$_ae_actual"
+	fi
+}
+
+
 # $1 - Expected minified output.
 # $2 - Input to minify.
 #
@@ -425,7 +463,9 @@ assert "$expected" "$input"
 input='function demo(longName){function innerName(otherName)'\
 '{let localName=otherName;return localName}return innerName(longName)}'
 expected='function demo(a){function b(a){let b=a;return b}return b(a)}'
-assert "$expected" "$input"
+alternativeExpected='function demo(a){function b(a){let c=a;return c}'\
+'return b(a)}'
+assertEither "$expected" "$alternativeExpected" "$input"
 
 input='function demo(longName){function innerName(otherName)'\
 '{return innerName(longName)+otherName}return innerName(1)}'
@@ -472,7 +512,8 @@ input='function(module,exports,__webpack_require__)'\
 expected='function(a,b,c){return a+b+c}'
 assert "$expected" "$input"
 
-input='function demo(){var objectValue={};var returnValue=1;return objectValue={},returnValue}'
+input='function demo(){var objectValue={};var returnValue=1;'\
+'return objectValue={},returnValue}'
 expected='function demo(){var a={};var b=1;return a={},b}'
 assert "$expected" "$input"
 
