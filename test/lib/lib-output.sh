@@ -54,18 +54,25 @@ _testPrintName( )
 }
 
 
-# $1 - Optional test label.
-#
 # Prints the successful test status.
 #
 testSuccess( )
 {
 	_testPrintName
-	if [ "$#" -gt "0" ]
-	then
-		printf ' (%s)' "$1"
-	fi
 	printf ': '
+	_testPrintStatus 1
+	printf '\n'
+}
+
+
+# $1 - Test label.
+#
+# Prints the successful test status with a label.
+#
+testSuccessWithLabel( )
+{
+	_testPrintName
+	printf ' (%s): ' "$1"
 	_testPrintStatus 1
 	printf '\n'
 }

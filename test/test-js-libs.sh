@@ -324,4 +324,4 @@ fi
 
 _download || testFail 'Could not download the JavaScript library test files\n'
 _main || testFail 'Could not run the JavaScript library test\n'
-testSuccess "$jsSyntaxCheckerName"
+testSuccessWithLabel "$jsSyntaxCheckerName"
