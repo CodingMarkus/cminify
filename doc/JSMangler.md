@@ -1,4 +1,4 @@
-JavaScript Identifier Mangling
+JavaScript identifier mangling
 =============================
 
 JavaScript identifier mangling is an optional second pass after normal JavaScript minification. It shortens local variable names while preserving the external interface and semantics of the input unit.

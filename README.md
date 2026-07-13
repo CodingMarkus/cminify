@@ -10,7 +10,7 @@ Additionally this project is also mirrored on [GitHub](https://github.com/Coding
 The name WebMinCer is a play on web, minification, and C, as well as the word mincer. The name reflects the tool's purpose: it effectively feeds web-language source files through a virtual mincer to produce compact output.
 
 
-Pre-Built Releases
+Pre-built releases
 ------------------
 
 Pre-built releases are available from the [Codeberg release page](https://codeberg.org/CodingMarkus/WebMinCer/releases). Download the binary-only archive for your operating system and processor architecture.
