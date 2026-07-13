@@ -78,6 +78,18 @@ testSuccessWithLabel( )
 }
 
 
+# $1 - Reason the test was skipped.
+#
+# Prints a skipped test status and its reason.
+#
+testSkip( )
+{
+	_testPrintName
+	printf ': SKIPPED\n'
+	printf '%s\n' "$1"
+}
+
+
 # $1 - printf format string.
 # $2... - printf format arguments.
 #

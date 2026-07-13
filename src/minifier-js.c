@@ -12,6 +12,51 @@
 #include <stdlib.h>
 #include <string.h>
 
+static bool IsJSIdentifierStart( const char c )
+{
+	return (
+		((unsigned char)(c - 'A') <= 'Z' - 'A'
+		|| (unsigned char)(c - 'a') <= 'z' - 'a' || c == '_' || c == '$')
+	);
+}
+
+
+static bool IsJSIdentifierPart( const char c )
+{
+	return (IsJSIdentifierStart(c)
+		|| (unsigned char)(c - '0') <= '9' - '0');
+}
+
+
+static bool IsJSRegexStart( const char * output, size_t outputLength )
+{
+	if (outputLength == 0
+		|| strchr("^!&|([{><+-*%:?~,;=", output[outputLength - 1]) != NULL) {
+		return (true);
+	}
+	if (!IsJSIdentifierPart(output[outputLength - 1])) {
+		return (false);
+	}
+	size_t wordStart = outputLength - 1;
+	while (wordStart > 0 && IsJSIdentifierPart(output[wordStart - 1])) {
+		wordStart -= 1;
+	}
+	size_t wordLength = outputLength - wordStart;
+	return ((wordLength == sizeof "return" - 1
+			 && !strncmp(&output[wordStart], "return", wordLength))
+		|| (wordLength == sizeof "throw" - 1
+			&& !strncmp(&output[wordStart], "throw", wordLength))
+		|| (wordLength == sizeof "case" - 1
+			&& !strncmp(&output[wordStart], "case", wordLength))
+		|| (wordLength == sizeof "delete" - 1
+			&& !strncmp(&output[wordStart], "delete", wordLength))
+		|| (wordLength == sizeof "typeof" - 1
+			&& !strncmp(&output[wordStart], "typeof", wordLength))
+		|| (wordLength == sizeof "void" - 1
+			&& !strncmp(&output[wordStart], "void", wordLength)));
+}
+
+
 struct Minification MinifyJS( const char * js )
 {
 	struct Minification m = {.result = malloc(strlen(js) + 1)};
@@ -483,6 +528,10 @@ struct Minification MinifyJS( const char * js )
 				continue;
 			}
 			char beforeSemicolon = m.result[resultLength - 1];
+			bool emptyElseStatement = resultLength >= sizeof "else" - 1
+				&& !strncmp(&m.result[resultLength - (sizeof "else" - 1)],
+						"else",
+						sizeof "else" - 1);
 			do {
 				i += 1;
 				JS_SKIP_WHITESPACES_COMMENTS(js, &i, m.result, &resultLength);
@@ -494,7 +543,8 @@ struct Minification MinifyJS( const char * js )
 			if ((js[i] == '\0' || js[i] == '}')
 				&& !(beforeSemicolon == ')'
 					 && roundBlocks[roundNestingLevel]
-							== ROUND_BLOCK_PREFIXED_CONDITION)) {
+							== ROUND_BLOCK_PREFIXED_CONDITION)
+				&& !emptyElseStatement) {
 				continue;
 			}
 
@@ -515,9 +565,7 @@ struct Minification MinifyJS( const char * js )
 			continue;
 		}
 		if (js[i] == '/' && js[i + 1] != '/' && js[i + 1] != '*'
-			&& (resultLength == 0
-				|| strchr("^!&|([{><+-*%:?~,;=", m.result[resultLength - 1])
-					   != NULL
+			&& (IsJSRegexStart(m.result, resultLength)
 				|| (m.result[resultLength - 1] == ' '
 					&& m.result[resultLength - 2] == '<'))) {
 			// This is a regex object.
@@ -724,6 +772,17 @@ struct Minification MinifyJS( const char * js )
 			} while (whitespaceCommentI < i);
 
 			if (hasLineBreak) {
+				if (((resultLength >= 2
+					  && m.result[resultLength - 1]
+							 == m.result[resultLength - 2]
+					  && (m.result[resultLength - 1] == '+'
+						  || m.result[resultLength - 1] == '-'))
+					 || m.result[resultLength - 1] == '/')
+					&& IsJSIdentifierStart(js[i])) {
+					m.result[resultLength++] = '\n';
+					continue;
+				}
+
 				// In JavaScript, `\n` can end a statement similar to `;`. We
 				// only remove `\n` when we are sure that it neither ends a
 				// statement nor is required as a whitespace between keywords

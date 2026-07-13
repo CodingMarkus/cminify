@@ -1332,6 +1332,23 @@ static bool jsMangleReplacementVisible(
 }
 
 
+static struct JsMangleMap * jsMangleVisibleMapForName(
+	struct JsMangleMap * visibleMaps,
+	size_t visibleMapsLength,
+	const char * name,
+	size_t length
+)
+{
+	for (size_t i = 0; i < visibleMapsLength; ++i) {
+		if (visibleMaps[i].scopeStart != 0 && jsMangleSameName(
+				visibleMaps[i].name, visibleMaps[i].length, name, length)) {
+			return (&visibleMaps[i]);
+		}
+	}
+	return (NULL);
+}
+
+
 static void jsMangleWriteNameSuffix(
 	size_t index, size_t width, const char * alphabet, size_t alphabetLength,
 	char * name, size_t * length
@@ -2391,29 +2408,41 @@ static bool jsMangleAssignNames(
 			program, js, start, end, state, visibleMaps);
 	}
 	for (size_t i = 0; i < bindingsLength; ++i) {
-		do {
-			jsMangleMakeName(nameIndex++,
-							 bindings[i].replacement,
-							 &bindings[i].replacementLength);
-		} while (jsMangleReplacementUsedInScope(bindings,
-												i,
+		struct JsMangleMap * shadowed = jsMangleVisibleMapForName(
+			visibleMaps,
+			visibleMapsLength,
+			bindings[i].name,
+			bindings[i].length);
+		if (shadowed != NULL) {
+			memcpy(bindings[i].replacement,
+				   shadowed->replacement,
+				   shadowed->replacementLength + 1);
+			bindings[i].replacementLength = shadowed->replacementLength;
+		} else {
+			do {
+				jsMangleMakeName(nameIndex++,
+								 bindings[i].replacement,
+								 &bindings[i].replacementLength);
+			} while (jsMangleReplacementUsedInScope(bindings,
+													i,
+													bindings[i].replacement,
+													bindings[i].replacementLength)
+					 || jsMangleNameUsedRaw(js,
+												start,
+												signatureEnd,
 												bindings[i].replacement,
 												bindings[i].replacementLength)
-				 || jsMangleNameUsedRaw(js,
-										start,
-										signatureEnd,
-										bindings[i].replacement,
-										bindings[i].replacementLength)
-				 || jsMangleNameUsed(program,
-									 js,
-									 start,
-									 end,
-									 bindings[i].replacement,
-									 bindings[i].replacementLength)
-				 || jsMangleReplacementVisible(visibleMaps,
-											   visibleMapsLength,
-											   bindings[i].replacement,
-											   bindings[i].replacementLength));
+					 || jsMangleNameUsed(program,
+												js,
+												start,
+												end,
+												bindings[i].replacement,
+												bindings[i].replacementLength)
+					 || jsMangleReplacementVisible(visibleMaps,
+														   visibleMapsLength,
+														   bindings[i].replacement,
+														   bindings[i].replacementLength));
+		}
 
 		if (bindings[i].replacementLength >= bindings[i].length) {
 			bindings[i].replacementLength = 0;

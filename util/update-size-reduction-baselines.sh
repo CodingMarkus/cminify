@@ -34,6 +34,7 @@ awk -f - "$testOutput" > "$tableFile" <<'AWK'
 		inTable = 1
 	}
 	inTable && /^\|/ {
+		sub(/ \([^)]*\)` \|/, "` |")
 		print
 		rows += 1
 	}

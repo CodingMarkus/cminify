@@ -171,4 +171,26 @@ input='function a () {}; function b () {}\n if(true) {} ; a=3'
 expected='function a(){}function b(){}if(!0);a=3'
 assert "$expected" "$input"
 
+input='function decrement(){let line=1;line--
+return line}'
+expected='function decrement(){let line=1;line--
+return line}'
+assert "$expected" "$input"
+
+input='const notMobileRE=/CrOS/
+const tabletRE=/android|ipad|playbook|silk/i'
+expected='const notMobileRE=/CrOS/
+const tabletRE=/android|ipad|playbook|silk/i'
+assert "$expected" "$input"
+
+input='function isInferredProjectName(name){return /dev\\/null\\/'\
+'inferredProject\\d+\\*/.test(name)}'
+expected='function isInferredProjectName(name){return/dev\/null\/'\
+'inferredProject\d+\*/.test(name)}'
+assert "$expected" "$input"
+
+input='if(condition){}else;'
+expected='if(condition);else;'
+assert "$expected" "$input"
+
 testSuccess
