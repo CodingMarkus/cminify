@@ -8,6 +8,8 @@ set -eu
 
 deployDir=.deploy
 archiveDir="$deployDir/archive"
+archiveBinDir="$archiveDir/bin"
+archiveDevDir="$archiveDir/dev"
 buildDir="$deployDir/build"
 testScripts='test/stage1/test-build.sh test/stage1/test-cli.sh \
 test/stage2/test-css.sh test/stage2/test-html.sh \
@@ -91,8 +93,10 @@ archiveTarget( )
 	if [ -n "$_devSuffix" ]; then
 		_archiveContents=$_target
 		_archiveName=$_target$_devSuffix
+		_archiveSubdir=dev
 	else
 		_archiveContents="$_target/webmincer"
+		_archiveSubdir=bin
 	fi
 
 	case "$_target" in
@@ -102,9 +106,9 @@ archiveTarget( )
 			fi
 			(
 				cd "$buildDir"
-				rm -f "../archive/$_archiveName.zip"
+				rm -f "../archive/$_archiveSubdir/$_archiveName.zip"
 				zip -9 --quiet --recurse-paths \
-					"../archive/$_archiveName.zip" \
+					"../archive/$_archiveSubdir/$_archiveName.zip" \
 					"$_archiveContents" \
 					--exclude "$_target/obj/*"
 			)
@@ -112,9 +116,9 @@ archiveTarget( )
 		*)
 			(
 				cd "$buildDir"
-				rm -f "../archive/$_archiveName.tar.xz"
+				rm -f "../archive/$_archiveSubdir/$_archiveName.tar.xz"
 				tar --create --xz \
-					--file="../archive/$_archiveName.tar.xz" \
+					--file="../archive/$_archiveSubdir/$_archiveName.tar.xz" \
 					--exclude="$_target/obj" "$_archiveContents"
 			)
 			;;
@@ -144,7 +148,7 @@ testStaticLinuxTarget( )
 
 
 rm -rf "$deployDir"
-mkdir -p "$archiveDir" "$buildDir"
+mkdir -p "$archiveBinDir" "$archiveDevDir" "$buildDir"
 
 buildTarget i686-linux-musl x86-linux-musl -static webmincer
 extractLinuxSymbols "$buildDir/i686-linux-musl/webmincer"

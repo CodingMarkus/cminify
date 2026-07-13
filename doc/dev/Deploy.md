@@ -11,7 +11,9 @@ The image is based on `debian:trixie-slim`. It downloads the latest stable Zig c
 Release targets
 ---------------
 
-Build output is written to `.deploy/build/<target>`. Release archives are written to `.deploy/archive/`.
+Build output is written to `.deploy/build/<target>`. Binary archives are written
+to `.deploy/archive/bin/`, and developer archives are written to
+`.deploy/archive/dev/`.
 
 - `i686-linux-musl` and `i686-linux-gnu`
 
