@@ -92,7 +92,7 @@ archiveTarget( )
 
 	if [ -n "$_devSuffix" ]; then
 		_archiveContents=$_target
-		_archiveName=$_target$_devSuffix
+		_archiveName=webmincer$_devSuffix_$_target
 		_archiveSubdir=dev
 	else
 		_archiveContents="$_target/webmincer"
