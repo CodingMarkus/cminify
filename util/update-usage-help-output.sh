@@ -10,12 +10,12 @@ set -eu
 scriptDirectory=$(CDPATH='' cd "$(dirname "$0")" && pwd)
 projectDirectory=$(CDPATH='' cd "$scriptDirectory/.." && pwd)
 binaryPath=${WEBMINCER_BINARY:-$projectDirectory/.build/webmincer}
-readmePath=${1:-$projectDirectory/README.md}
+usagePath=${1:-$projectDirectory/doc/Usage.md}
 temporaryDirectory=$(mktemp -d \
-	"${TMPDIR:-/tmp}/webmincer-readme-help.XXXXXX")
+	"${TMPDIR:-/tmp}/webmincer-usage-help.XXXXXX")
 trimLeadingBlankLinesAwk=$temporaryDirectory/trim-leading-blank-lines.awk
 helpOutput=$temporaryDirectory/help-output
-updatedReadme=$temporaryDirectory/README.md
+updatedUsage=$temporaryDirectory/Usage.md
 
 trap 'rm -rf "$temporaryDirectory"' EXIT HUP INT TERM
 
@@ -27,9 +27,9 @@ then
 	exit 1
 fi
 
-if [ ! -f "$readmePath" ]
+if [ ! -f "$usagePath" ]
 then
-	printf 'README file not found: %s\n' "$readmePath" >&2
+	printf 'Usage file not found: %s\n' "$usagePath" >&2
 	exit 1
 fi
 
@@ -41,8 +41,8 @@ cat > "$trimLeadingBlankLinesAwk" <<'AWK'
 AWK
 "$binaryPath" | awk -f "$trimLeadingBlankLinesAwk" > "$helpOutput"
 
-if ! awk -v helpFile="$helpOutput" -f - "$readmePath" \
-	> "$updatedReadme" <<'AWK'
+if ! awk -v helpFile="$helpOutput" -f - "$usagePath" \
+	> "$updatedUsage" <<'AWK'
 	BEGIN {
 		while ((getline line < helpFile) > 0) {
 			help[++helpLines] = line
@@ -80,9 +80,9 @@ if ! awk -v helpFile="$helpOutput" -f - "$readmePath" \
 	}
 AWK
 then
-	printf 'Could not locate the help code block in %s\n' "$readmePath" \
+	printf 'Could not locate the help code block in %s\n' "$usagePath" \
 		>&2
 	exit 1
 fi
 
-mv "$updatedReadme" "$readmePath"
+mv "$updatedUsage" "$usagePath"
