@@ -7,14 +7,31 @@
 set -eu
 
 deployDir=.deploy
-archiveDir="$deployDir/archive"
+archiveDir="$deployDir/archives"
 archiveBinDir="$archiveDir/bin"
 archiveDevDir="$archiveDir/dev"
 buildDir="$deployDir/build"
 testScripts='test/stage1/test-build.sh test/stage1/test-cli.sh \
-test/stage2/test-css.sh test/stage2/test-html.sh \
-test/stage2/test-js-mangling.sh test/stage2/test-js.sh \
-test/stage2/test-json.sh test/stage2/test-xml.sh'
+	test/stage2/test-css.sh test/stage2/test-html.sh \
+	test/stage2/test-js-mangling.sh test/stage2/test-js.sh \
+	test/stage2/test-json.sh test/stage2/test-xml.sh'
+version=$(awk -F '"' \
+	'/^static const char \* const VERSION = / { print $2 }' \
+	src/webmincer.c)
+
+case "$version" in
+	*.*.*.* | *..* | .* | *.)
+		printf 'Invalid version: %s\n' "$version" >&2
+		exit 1
+		;;
+	*.*.*)
+		if [ "${version##*.}" -eq 0 ]; then
+			version=${version%.*}
+		fi
+		;;
+	*.*) ;;
+	*) printf 'Invalid version: %s\n' "$version" >&2; exit 1 ;;
+esac
 
 
 buildTarget( )
@@ -85,24 +102,25 @@ archiveTarget( )
 	_devSuffix=${2-}
 
 	case "$_target" in
-		i686-linux-gnu) _archiveName=WebMinCer_Linux-x86 ;;
-		i686-linux-musl) _archiveName=WebMinCer_Linux-x86-static ;;
-		x86_64-linux-gnu) _archiveName=WebMinCer_Linux-x64 ;;
-		x86_64-linux-musl) _archiveName=WebMinCer_Linux-x64-static ;;
-		aarch64-linux-gnu) _archiveName=WebMinCer_Linux-arm64 ;;
-		aarch64-linux-musl) _archiveName=WebMinCer_Linux-arm64-static ;;
-		x86_64-windows-gnu) _archiveName=WebMinCer_Windows-x64 ;;
-		aarch64-windows-gnu) _archiveName=WebMinCer_Windows-arm64 ;;
-		x86_64-macos) _archiveName=WebMinCer_macOS-x64 ;;
-		aarch64-macos) _archiveName=WebMinCer_macOS-arm64 ;;
+		i686-linux-gnu) _archiveName=Linux-x86 ;;
+		i686-linux-musl) _archiveName=Linux-x86-static ;;
+		x86_64-linux-gnu) _archiveName=Linux-x64 ;;
+		x86_64-linux-musl) _archiveName=Linux-x64-static ;;
+		aarch64-linux-gnu) _archiveName=Linux-arm64 ;;
+		aarch64-linux-musl) _archiveName=Linux-arm64-static ;;
+		x86_64-windows-gnu) _archiveName=Windows-x64 ;;
+		aarch64-windows-gnu) _archiveName=Windows-arm64 ;;
+		x86_64-macos) _archiveName=macOS-x64 ;;
+		aarch64-macos) _archiveName=macOS-arm64 ;;
 		*) echo "Unsupported archive target: $_target" >&2; exit 1 ;;
 	esac
 
 	if [ -n "$_devSuffix" ]; then
 		_archiveContents=$_target
-		_archiveName="webmincer${_devSuffix}_${_target}"
+		_archiveName="webmincer_${version}_dev_${_target}"
 		_archiveSubdir=dev
 	else
+		_archiveName="WebMinCer_${version}_${_archiveName}"
 		_archiveContents="$_target/webmincer"
 		_archiveSubdir=bin
 		case "$_target" in
@@ -242,12 +260,12 @@ buildTarget x86_64-macos x86_64-macos '' webmincer
 extractMacosSymbols "$buildDir/x86_64-macos/webmincer"
 addMacosSecurityWarning "$buildDir/x86_64-macos"
 archiveTarget x86_64-macos
-verifyMacosArchive "$archiveBinDir/WebMinCer_macOS-x64.tar.xz"
+verifyMacosArchive "$archiveBinDir/WebMinCer_${version}_macOS-x64.tar.xz"
 archiveTarget x86_64-macos -dev
 
 buildTarget aarch64-macos aarch64-macos '' webmincer
 extractMacosSymbols "$buildDir/aarch64-macos/webmincer"
 addMacosSecurityWarning "$buildDir/aarch64-macos"
 archiveTarget aarch64-macos
-verifyMacosArchive "$archiveBinDir/WebMinCer_macOS-arm64.tar.xz"
+verifyMacosArchive "$archiveBinDir/WebMinCer_${version}_macOS-arm64.tar.xz"
 archiveTarget aarch64-macos -dev
