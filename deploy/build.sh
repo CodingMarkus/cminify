@@ -61,6 +61,14 @@ extractMacosSymbols( )
 }
 
 
+addMacosSecurityWarning( )
+{
+	_targetDir=$1
+
+	cp deploy/macOS_SecurityWarning.txt "$_targetDir/"
+}
+
+
 extractWindowsSymbols( )
 {
 	_binary=$1
@@ -92,11 +100,15 @@ archiveTarget( )
 
 	if [ -n "$_devSuffix" ]; then
 		_archiveContents=$_target
-		_archiveName=webmincer$_devSuffix_$_target
+		_archiveName="webmincer${_devSuffix}_${_target}"
 		_archiveSubdir=dev
 	else
 		_archiveContents="$_target/webmincer"
 		_archiveSubdir=bin
+		case "$_target" in
+			*-macos) _archiveFiles='webmincer macOS_SecurityWarning.txt' ;;
+			*) _archiveFiles=webmincer ;;
+		esac
 	fi
 
 	case "$_target" in
@@ -104,25 +116,58 @@ archiveTarget( )
 			if [ -z "$_devSuffix" ]; then
 				_archiveContents="$_target/webmincer.exe"
 			fi
-			(
-				cd "$buildDir"
-				rm -f "../archive/$_archiveSubdir/$_archiveName.zip"
-				zip -9 --quiet --recurse-paths \
-					"../archive/$_archiveSubdir/$_archiveName.zip" \
-					"$_archiveContents" \
-					--exclude "$_target/obj/*"
-			)
+			if [ -n "$_devSuffix" ]; then
+				(
+					cd "$buildDir"
+					rm -f "../archive/$_archiveSubdir/$_archiveName.zip"
+					zip -9 --quiet --recurse-paths \
+						"../archive/$_archiveSubdir/$_archiveName.zip" \
+						"$_archiveContents" \
+						--exclude "$_target/obj/*"
+				)
+			else
+				(
+					cd "$buildDir/$_target"
+					rm -f "../../archive/$_archiveSubdir/$_archiveName.zip"
+					zip -9 --quiet \
+						"../../archive/$_archiveSubdir/$_archiveName.zip" \
+						webmincer.exe
+				)
+			fi
 			;;
 		*)
-			(
-				cd "$buildDir"
-				rm -f "../archive/$_archiveSubdir/$_archiveName.tar.xz"
-				tar --create --xz \
-					--file="../archive/$_archiveSubdir/$_archiveName.tar.xz" \
-					--exclude="$_target/obj" "$_archiveContents"
-			)
+			if [ -n "$_devSuffix" ]; then
+				(
+					cd "$buildDir"
+					rm -f "../archive/$_archiveSubdir/$_archiveName.tar.xz"
+					tar --create --xz \
+						--file="../archive/$_archiveSubdir/$_archiveName.tar.xz" \
+						--exclude="$_target/obj" "$_archiveContents"
+				)
+			else
+				(
+					cd "$buildDir/$_target"
+					rm -f "../../archive/$_archiveSubdir/$_archiveName.tar.xz"
+					tar --create --xz \
+						--file="../../archive/$_archiveSubdir/$_archiveName.tar.xz" \
+						$_archiveFiles
+				)
+			fi
 			;;
 	esac
+}
+
+
+verifyMacosArchive( )
+{
+	_archive=$1
+
+	if ! tar --list --file="$_archive" |
+		grep --fixed-strings --quiet macOS_SecurityWarning.txt
+	then
+		printf 'Missing macOS security warning in %s\n' "$_archive" >&2
+		exit 1
+	fi
 }
 
 
@@ -195,10 +240,14 @@ archiveTarget aarch64-windows-gnu -dev
 
 buildTarget x86_64-macos x86_64-macos '' webmincer
 extractMacosSymbols "$buildDir/x86_64-macos/webmincer"
+addMacosSecurityWarning "$buildDir/x86_64-macos"
 archiveTarget x86_64-macos
+verifyMacosArchive "$archiveBinDir/WebMinCer_macOS-x64.tar.xz"
 archiveTarget x86_64-macos -dev
 
 buildTarget aarch64-macos aarch64-macos '' webmincer
 extractMacosSymbols "$buildDir/aarch64-macos/webmincer"
+addMacosSecurityWarning "$buildDir/aarch64-macos"
 archiveTarget aarch64-macos
+verifyMacosArchive "$archiveBinDir/WebMinCer_macOS-arm64.tar.xz"
 archiveTarget aarch64-macos -dev
