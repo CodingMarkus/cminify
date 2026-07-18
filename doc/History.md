@@ -1,7 +1,7 @@
 Release History
 ===============
 
-## [WebMinCer 1.0](https://codeberg.org/CodingMarkus/WebMinCer/releases/tag/release%2F1.0) (2026-07-13)
+## [WebMinCer 1.0](https://codeberg.org/CodingMarkus/WebMinCer/releases/tag/release/1.0) (2026-07-13)
 
 ### Transforming cminify to WebMinCer
 
