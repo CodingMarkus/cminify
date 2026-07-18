@@ -84,4 +84,4 @@ Use `--benchmark` to print the size reduction instead of the minified result:
 webmincer js app.js --benchmark
 ```
 
-This is useful for comparing output sizes, but it does not write the minified content to standard output.
+This is useful for comparing output sizes, but it does not write the minified content to standard output. See [current size-reduction baselines](CurrentSizeReductionBaselines.md) for benchmark results from supported JavaScript libraries.

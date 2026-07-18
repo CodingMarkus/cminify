@@ -39,7 +39,7 @@ Documentation
 
 - [Usage](doc/Usage.md) documents the command-line interface.
 
-- [Current size-reduction baselines](doc/CurrentSizeReductionBaselines.md) compare original, minified, and mangled JavaScript library sizes.
+- [Download](doc/Download.md) lists the available binary releases.
 
 - [Development](doc/Development.md) covers building, tests, and development utilities.
 
