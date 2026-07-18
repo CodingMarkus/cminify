@@ -5,7 +5,7 @@ set -eu
 . test/lib/lib-output.sh
 
 binaryPath=${WEBMINCER_BINARY:-./.build/webmincer}
-updateReadmeHelpScript=./util/update-readme-help-output.sh
+updateUsageHelpScript=./util/update-usage-help-output.sh
 tmpDir=$( mktemp -d "${TMPDIR:-/tmp}/webmincer-cli.XXXXXX" ) \
 	|| testFail 'Could not create a temporary test directory\n'
 trap 'rm -rf "$tmpDir"' EXIT HUP INT TERM
@@ -114,12 +114,12 @@ assertHelpOutput( )
 }
 
 
-assertReadmeContainsHelpOutput( )
+assertUsageContainsHelpOutput( )
 {
 	_archo_help_file=$1
-	_archo_readme_file=$2
+	_archo_usage_file=$2
 
-	if ! awk -f - "$_archo_help_file" "$_archo_readme_file" <<'AWK'
+	if ! awk -f - "$_archo_help_file" "$_archo_usage_file" <<'AWK'
 		NR == FNR {
 			if ($0 !~ /^[[:space:]]*$/ || started) {
 				lines[++lineCount] = $0
@@ -149,7 +149,30 @@ assertReadmeContainsHelpOutput( )
 		}
 AWK
 	then
-		testFail 'Expected README.md to contain the complete help output\n'
+		testFail 'Expected Usage.md to contain the complete help output\n'
+	fi
+}
+
+
+assertUsageHasHelpCodeBlock( )
+{
+	_auhcb_file=$1
+
+	if ! awk -f - "$_auhcb_file" <<'AWK'
+		$0 == "Command-line reference" {
+			getline
+			getline
+			getline
+			getline
+			found = ($0 == "USAGE")
+			exit
+		}
+		END {
+			exit(!found)
+		}
+AWK
+	then
+		testFail 'Expected the command-line reference to contain help output\n'
 	fi
 }
 
@@ -157,10 +180,11 @@ AWK
 assertStdout
 cp "$tmpDir/stdout" "$tmpDir/help-no-args"
 assertHelpOutput "$tmpDir/help-no-args"
-assertReadmeContainsHelpOutput "$tmpDir/help-no-args" README.md
+assertUsageContainsHelpOutput "$tmpDir/help-no-args" doc/Usage.md
+assertUsageHasHelpCodeBlock doc/Usage.md
 
-cp README.md "$tmpDir/README.md"
-awk -f - "$tmpDir/README.md" > "$tmpDir/README.updated" <<'AWK'
+cp doc/Usage.md "$tmpDir/Usage.md"
+awk -f - "$tmpDir/Usage.md" > "$tmpDir/Usage.updated" <<'AWK'
 	!updated && /Show this help page\./ {
 		sub(/Show this help page\./, "Show outdated help text.")
 		updated = 1
@@ -172,10 +196,11 @@ awk -f - "$tmpDir/README.md" > "$tmpDir/README.updated" <<'AWK'
 		exit(!updated)
 	}
 AWK
-mv "$tmpDir/README.updated" "$tmpDir/README.md"
-WEBMINCER_BINARY="$binaryPath" "$updateReadmeHelpScript" \
-	"$tmpDir/README.md"
-assertReadmeContainsHelpOutput "$tmpDir/help-no-args" "$tmpDir/README.md"
+mv "$tmpDir/Usage.updated" "$tmpDir/Usage.md"
+WEBMINCER_BINARY="$binaryPath" "$updateUsageHelpScript" \
+	"$tmpDir/Usage.md"
+assertUsageContainsHelpOutput "$tmpDir/help-no-args" "$tmpDir/Usage.md"
+assertUsageHasHelpCodeBlock "$tmpDir/Usage.md"
 
 assertStdout -h
 	cp "$tmpDir/stdout" "$tmpDir/help-short"

@@ -128,6 +128,8 @@ Output generation
 
 The output starts with the minified input length plus one byte for the terminator. The count pass adds bytes for shorthand-property expansion and other guaranteed growth. Declarations and references emit their mangled name when one is assigned. Shorthand properties emit the expanded `name:name` form. All other tokens retain their original source text.
 
+See [current size-reduction baselines](CurrentSizeReductionBaselines.md) for the effect of mangling on supported JavaScript libraries.
+
 
 Implementation and validation
 -----------------------------

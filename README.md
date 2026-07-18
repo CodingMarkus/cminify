@@ -10,72 +10,40 @@ Additionally this project is also mirrored on [GitHub](https://github.com/Coding
 The name WebMinCer is a play on web, minification, and C, as well as the word mincer. The name reflects the tool's purpose: it effectively feeds web-language source files through a virtual mincer to produce compact output.
 
 
-Pre-built releases
-------------------
+Design objectives
+-----------------
 
-Pre-built releases are available from the [Codeberg release page](https://codeberg.org/CodingMarkus/WebMinCer/releases). Download the binary-only archive for your operating system and processor architecture.
+- Released as single binary with no dependencies except `libc`.
 
-- Linux x86: 32-bit i686. Download `WebMinCer_Linux-x86.tar.xz`, or `WebMinCer_Linux-x86-static.tar.xz` for a self-contained build.
+- Easy to build with a simple `make` invocation.
 
-- Linux x64: 64-bit x86_64. Download `WebMinCer_Linux-x64.tar.xz`, or `WebMinCer_Linux-x64-static.tar.xz` for a self-contained build.
+- The only build requirements are a POSIX shell environment, make and a modern C compiler (clang recommended, gcc possible as well, others might work).
 
-- Linux arm64: 64-bit ARM. Download `WebMinCer_Linux-arm64.tar.xz`, or `WebMinCer_Linux-arm64-static.tar.xz` for a self-contained build.
+- It is not intended to provide bindings for scripting languages.
 
-- macOS x64: Intel Macs. Download `WebMinCer_macOS-x64.tar.xz`.
+- Also minify inline CSS, JavaScript and JSON in HTML and XML documents.
 
-- macOS arm64: Apple silicon Macs. Download `WebMinCer_macOS-arm64.tar.xz`.
+- Extensive unit testing of all features.
 
-- Windows x64: 64-bit x86_64 systems. Download `WebMinCer_Windows-x64.zip`.
+- Produce standards-conformant output from any standards-conformant input.
 
-- Windows arm64: 64-bit ARM systems. Download `WebMinCer_Windows-arm64.zip`.
+- The program should fail on syntax errors and must not attempt to fix them.
 
-Linux and macOS archives use the `.tar.xz` format. Windows archives use the `.zip` format. Binary-only archives contain only the release binary. Static Linux archives have `-static` in their names and do not require a system glibc installation.
-
-Developer archives have names such as `webmincer-dev_x86_64-linux-gnu.tar.xz`. They include the release binary, debugging symbols, and build information for developers who need them.
+- This minifier is not a cleaner. It should not modify the semantics of the markup.
 
 
-Command-line reference
-----------------------
+Documentation
+-------------
 
-```
-USAGE
+- Technical details about the current minifiers and their scope are documented in [Minification](doc/Minification.md).
 
-    webmincer <format> <input-file|-> [options]
+- [Usage](doc/Usage.md) documents the command-line interface.
 
+- [Download](doc/Download.md) lists the available binary releases.
 
-FORMATS
-
-    css    Minify CSS input.
-    js     Minify JavaScript input.
-    xml    Minify XML input.
-    html   Minify HTML input.
-    json   Minify JSON input.
+- [Development](doc/Development.md) covers building, tests, and development utilities.
 
 
-OPTIONS
-
-    -h, -help, --help       Show this help page.
-
-    --benchmark             Print size reduction statistics.
-
-    --mangle                Enable output mangling.
-
-                            Currently only JavaScript code is
-                            mangled, so this has no effect unless
-                            the format is js or the input is HTML
-                            with embedded JavaScript.
-
-    --compact-ws
-                            Compact whitespace in HTML and XML text
-                            nodes. This can change the rendered layout.
-
-    --version               Print version 1.0.
-
-
-NOTES
-
-    Use '-' as the input file to read from standard input.
-```
 
 Building and testing
 --------------------
@@ -111,37 +79,30 @@ Build requirements are a POSIX shell environment, `make`, and a modern C
 compiler. The build uses the `cc` command by default, but you can
 override it, for example with `make CC=clang` or `make CC=gcc`.
 
-Design objectives
------------------
-
-- Released as single binary with no dependencies except `libc`.
-
-- Easy to build with a simple `make` invocation.
-
-- The only build requirements are a POSIX shell environment, make and a modern C compiler (clang recommended, gcc possible as well, others might work).
-
-- It is not intended to provide bindings for scripting languages.
-
-- Also minify inline CSS, JavaScript and JSON in HTML and XML documents.
-
-- Extensive unit testing of all features.
-
-- Produce standards-conformant output from any standards-conformant input.
-
-- The program should fail on syntax errors and must not attempt to fix them.
-
-- This minifier is not a cleaner. It should not modify the semantics of the markup.
 
 
-Documentation
--------------
+Pre-built releases
+------------------
 
-- Technical details about the current minifiers and their scope are documented in [Minification](doc/Minification.md).
+Pre-built releases are available from the [Codeberg release page](https://codeberg.org/CodingMarkus/WebMinCer/releases). Download the binary-only archive for your operating system and processor architecture.
 
-- [Current size-reduction baselines](doc/CurrentSizeReductionBaselines.md) compare original, minified, and mangled JavaScript library sizes.
+- Linux x86: 32-bit i686. Download `WebMinCer_Linux-x86.tar.xz`, or `WebMinCer_Linux-x86-static.tar.xz` for a self-contained build.
 
-- [Development](doc/Development.md) covers building, tests, and development utilities.
+- Linux x64: 64-bit x86_64. Download `WebMinCer_Linux-x64.tar.xz`, or `WebMinCer_Linux-x64-static.tar.xz` for a self-contained build.
 
+- Linux arm64: 64-bit ARM. Download `WebMinCer_Linux-arm64.tar.xz`, or `WebMinCer_Linux-arm64-static.tar.xz` for a self-contained build.
+
+- macOS x64: Intel Macs. Download `WebMinCer_macOS-x64.tar.xz`.
+
+- macOS arm64: Apple silicon Macs. Download `WebMinCer_macOS-arm64.tar.xz`.
+
+- Windows x64: 64-bit x86_64 systems. Download `WebMinCer_Windows-x64.zip`.
+
+- Windows arm64: 64-bit ARM systems. Download `WebMinCer_Windows-arm64.zip`.
+
+Linux and macOS archives use the `.tar.xz` format. Windows archives use the `.zip` format. Binary-only archives contain only the release binary. Static Linux archives have `-static` in their names and do not require a system glibc installation.
+
+Developer archives have names such as `webmincer-dev_x86_64-linux-gnu.tar.xz`. They include the release binary, debugging symbols, and build information for developers who need them.
 
 
 Origins and relationship to cminify
