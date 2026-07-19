@@ -41,6 +41,8 @@ Documentation
 
 - [Download](doc/Download.md) lists the available binary releases.
 
+- [Feedback](doc/Feedback.md) explains how to report bugs and request features.
+
 - [Development](doc/Development.md) covers building, tests, and development utilities.
 
 
