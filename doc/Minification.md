@@ -53,7 +53,7 @@ JSON is minified both as standalone input and in script elements with the `appli
 HTML and XML
 ------------
 
-The HTML and XML minifiers remove comments and whitespace that is insignificant to markup syntax. They preserve tag and attribute content where changing it could affect the document. They recognize embedded script, style, and supported JSON data and pass that content through the relevant minifier. JavaScript modules are recognized through `type="module"`, and classic JavaScript through `type="text/javascript"` or the default script type.
+The HTML and XML minifiers remove comments and whitespace that is insignificant to markup syntax. The HTML minifier also removes quotes from safe attribute values and omits redundant empty and boolean attribute values. XML attribute syntax is preserved. They recognize embedded script, style, and supported JSON data and pass that content through the relevant minifier. JavaScript modules are recognized through `type="module"`, and classic JavaScript through `type="text/javascript"` or the default script type.
 
 HTML and XML text nodes are preserved by default because CSS can make any element preserve whitespace. Use `--compact-ws` to compact whitespace in text nodes when a layout change is acceptable.
 
@@ -78,5 +78,3 @@ Possible future work
 - More CSS colour and function reductions, such as safe `hsl()` alternatives.
 
 - UTF-16 input support.
-
-- Opt-in HTML reductions: unquoted safe attributes, boolean attributes, and optional tags. These need particularly careful compatibility testing.
