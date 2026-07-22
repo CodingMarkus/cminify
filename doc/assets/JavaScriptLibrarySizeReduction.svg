@@ -17,9 +17,9 @@
 <text x='1260' y='771' font-size='15' text-anchor='middle'>100%</text>
 <text x='264' y='160' font-size='16' text-anchor='end'>Ant Design</text>
 <rect x='280' y='134' width='674.458' height='16' fill='#4c78a8'/>
-<rect x='280' y='155' width='491.48' height='16' fill='#f58518'/>
+<rect x='280' y='155' width='481.303' height='16' fill='#f58518'/>
 <text x='962.5' y='148.0' font-size='14'>68.8%</text>
-<text x='779.5' y='169.0' font-size='14'>50.2%</text>
+<text x='769.3' y='169.0' font-size='14'>49.1%</text>
 <text x='264' y='208' font-size='16' text-anchor='end'>Terser</text>
 <rect x='280' y='182' width='608.818' height='16' fill='#4c78a8'/>
 <rect x='280' y='203' width='608.774' height='16' fill='#f58518'/>
@@ -32,34 +32,34 @@
 <text x='979.2' y='265.0' font-size='14'>70.5%</text>
 <text x='264' y='304' font-size='16' text-anchor='end'>Apache ECharts</text>
 <rect x='280' y='278' width='537.184' height='16' fill='#4c78a8'/>
-<rect x='280' y='299' width='379.062' height='16' fill='#f58518'/>
+<rect x='280' y='299' width='371.333' height='16' fill='#f58518'/>
 <text x='825.2' y='292.0' font-size='14'>54.8%</text>
-<text x='667.1' y='313.0' font-size='14'>38.7%</text>
+<text x='659.3' y='313.0' font-size='14'>37.9%</text>
 <text x='264' y='352' font-size='16' text-anchor='end'>jQuery</text>
 <rect x='280' y='326' width='482.1' height='16' fill='#4c78a8'/>
-<rect x='280' y='347' width='360.675' height='16' fill='#f58518'/>
+<rect x='280' y='347' width='346.046' height='16' fill='#f58518'/>
 <text x='770.1' y='340.0' font-size='14'>49.2%</text>
-<text x='648.7' y='361.0' font-size='14'>36.8%</text>
+<text x='634.0' y='361.0' font-size='14'>35.3%</text>
 <text x='264' y='400' font-size='16' text-anchor='end'>Lodash</text>
 <rect x='280' y='374' width='263.406' height='16' fill='#4c78a8'/>
-<rect x='280' y='395' width='171.399' height='16' fill='#f58518'/>
+<rect x='280' y='395' width='151.37' height='16' fill='#f58518'/>
 <text x='551.4' y='388.0' font-size='14'>26.9%</text>
-<text x='459.4' y='409.0' font-size='14'>17.5%</text>
+<text x='439.4' y='409.0' font-size='14'>15.4%</text>
 <text x='264' y='448' font-size='16' text-anchor='end'>Moment.js</text>
 <rect x='280' y='422' width='539.326' height='16' fill='#4c78a8'/>
-<rect x='280' y='443' width='391.856' height='16' fill='#f58518'/>
+<rect x='280' y='443' width='378.419' height='16' fill='#f58518'/>
 <text x='827.3' y='436.0' font-size='14'>55.0%</text>
-<text x='679.9' y='457.0' font-size='14'>40.0%</text>
+<text x='666.4' y='457.0' font-size='14'>38.6%</text>
 <text x='264' y='496' font-size='16' text-anchor='end'>React</text>
 <rect x='280' y='470' width='667.605' height='16' fill='#4c78a8'/>
-<rect x='280' y='491' width='462.801' height='16' fill='#f58518'/>
+<rect x='280' y='491' width='454.852' height='16' fill='#f58518'/>
 <text x='955.6' y='484.0' font-size='14'>68.1%</text>
-<text x='750.8' y='505.0' font-size='14'>47.2%</text>
+<text x='742.9' y='505.0' font-size='14'>46.4%</text>
 <text x='264' y='544' font-size='16' text-anchor='end'>Three.js</text>
 <rect x='280' y='518' width='757.855' height='16' fill='#4c78a8'/>
-<rect x='280' y='539' width='618.779' height='16' fill='#f58518'/>
+<rect x='280' y='539' width='616.971' height='16' fill='#f58518'/>
 <text x='1045.9' y='532.0' font-size='14'>77.3%</text>
-<text x='906.8' y='553.0' font-size='14'>63.1%</text>
+<text x='905.0' y='553.0' font-size='14'>63.0%</text>
 <text x='264' y='592' font-size='16' text-anchor='end'>TypeScript</text>
 <rect x='280' y='566' width='726.588' height='16' fill='#4c78a8'/>
 <rect x='280' y='587' width='726.588' height='16' fill='#f58518'/>
@@ -67,9 +67,9 @@
 <text x='1014.6' y='601.0' font-size='14'>74.1%</text>
 <text x='264' y='640' font-size='16' text-anchor='end'>Victory</text>
 <rect x='280' y='614' width='723.239' height='16' fill='#4c78a8'/>
-<rect x='280' y='635' width='499.389' height='16' fill='#f58518'/>
+<rect x='280' y='635' width='486.164' height='16' fill='#f58518'/>
 <text x='1011.2' y='628.0' font-size='14'>73.8%</text>
-<text x='787.4' y='649.0' font-size='14'>51.0%</text>
+<text x='774.2' y='649.0' font-size='14'>49.6%</text>
 <text x='264' y='688' font-size='16' text-anchor='end'>Vue.js</text>
 <rect x='280' y='662' width='639.928' height='16' fill='#4c78a8'/>
 <rect x='280' y='683' width='602.059' height='16' fill='#f58518'/>

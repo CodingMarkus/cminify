@@ -73,8 +73,6 @@ Possible future work
 
 - Highly restricted JavaScript property mangling for deliberately closed-world bundler output that follows an explicit property-name convention. Bundling alone does not make it safe because property names can be observed dynamically or used by external code.
 
-- Frequency-based JavaScript mangled-name assignment.
-
 - More CSS colour and function reductions, such as safe `hsl()` alternatives.
 
 - UTF-16 input support.

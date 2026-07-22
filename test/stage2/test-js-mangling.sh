@@ -94,6 +94,27 @@ input='function demo(longName){return longName}'
 expected='function demo(a){return a}'
 assert "$expected" "$input"
 
+input='function demo(rareName,frequentName){return frequentName+'\
+'frequentName+frequentName+rareName}'
+expected='function demo(b,a){return a+a+a+b}'
+assert "$expected" "$input"
+
+input='function demo(rareName0'
+_mf_i=1
+while [ "$_mf_i" -lt 52 ]
+do
+	input="${input},rareName${_mf_i}"
+	_mf_i=$(( _mf_i + 1 ))
+done
+input="${input},frequentName){return frequentName+frequentName+"
+input="${input}frequentName+frequentName+frequentName}"
+_mf_actual=$( printf '%b' "$input" | ./.build/webmincer js - --mangle )
+case "$_mf_actual" in
+'function demo('*',_a,a){return a+a+a+a+a}') ;;
+*) testFail 'Frequency-based mangling did not prioritize frequentName:\n%s\n' \
+	"$_mf_actual" ;;
+esac
+
 input='function demo(longName){let otherName=longName+1;return otherName}'
 expected='function demo(a){let b=a+1;return b}'
 assert "$expected" "$input"
@@ -469,7 +490,7 @@ assertEither "$expected" "$alternativeExpected" "$input"
 
 input='function demo(longName){function innerName(otherName)'\
 '{return innerName(longName)+otherName}return innerName(1)}'
-expected='function demo(a){function b(c){return b(a)+c}return b(1)}'
+expected='function demo(b){function a(c){return a(b)+c}return a(1)}'
 assert "$expected" "$input"
 
 input='function demo(longName){if(longName){function innerName()'\
@@ -545,9 +566,9 @@ input='function Interpolant(parameterPositions,sampleValues,sampleSize,'\
 'function copySampleValue_(index){var result=this.resultBuffer,'\
 'values=this.sampleValues,stride=this.valueSize,offset=index*stride;'\
 'for(var i=0;i!==stride;++i){result[i]=values[offset+i]}return result}})'
-expected='function Interpolant(a,b,c,d){this.parameterPositions=a;'\
-'this._cachedIndex=0;this.resultBuffer=d!==undefined?d:'\
-'new b.constructor(c);this.sampleValues=b;this.valueSize=c}'\
+expected='function Interpolant(c,a,d,b){this.parameterPositions=c;'\
+'this._cachedIndex=0;this.resultBuffer=b!==undefined?b:'\
+'new a.constructor(d);this.sampleValues=a;this.valueSize=d}'\
 'Object.assign(Interpolant.prototype,{copySampleValue_:'\
 'function copySampleValue_(index){var result=this.resultBuffer,'\
 'values=this.sampleValues,stride=this.valueSize,offset=index*stride;'\
