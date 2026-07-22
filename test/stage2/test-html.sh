@@ -102,6 +102,17 @@ input='<html prop="abc"/>'
 expected='<html prop=abc>'
 assert "$expected" "$input"
 
+input='<input disabled="disabled" checked=CHECKED required="">'
+input="${input}<script defer=defer nomodule=\"\"></script>"
+input="${input}<x-input disabled=disabled data-empty=\"\"></x-input>"
+expected='<input disabled checked required><script defer nomodule></script>'
+expected="${expected}<x-input disabled=disabled data-empty></x-input>"
+assert "$expected" "$input"
+
+input='<input disabled=false><option selected=selected></option>'
+expected='<input disabled=false><option selected></option>'
+assert "$expected" "$input"
+
 input='<html></html>'
 expected='<html></html>'
 assert "$expected" "$input"

@@ -1,5 +1,7 @@
 CC ?= cc
 LDFLAGS ?=
+VERSION ?= 1.1
+VERSION_CFLAGS := -DWEBMINCER_VERSION=\"$(VERSION)\"
 
 BASE_CFLAGS ?= \
 	-Werror \
@@ -37,16 +39,20 @@ DEPLOY_IMAGE ?= webmincer-deploy
 .PHONY: build
 build: $(BUILD_DIR)/$(OUTPUT)
 
+.PHONY: version
+version:
+	@printf '%s\n' "$(VERSION)"
+
 $(BUILD_DIR)/$(OUTPUT): $(BUILD_OBJECTS) | $(BUILD_DIR)
 	$(CC) $(BASE_CFLAGS) $(BUILD_CFLAGS) $(LDFLAGS) -o $@ $(BUILD_OBJECTS)
 
-$(BUILD_OBJECT_DIR)/%.o: src/%.c $(HEADERS) | $(BUILD_DIR)
+$(BUILD_OBJECT_DIR)/%.o: src/%.c $(HEADERS) Makefile | $(BUILD_DIR)
 	mkdir -p $(dir $@)
-	$(CC) $(BASE_CFLAGS) $(BUILD_CFLAGS) -c -o $@ $<
+	$(CC) $(BASE_CFLAGS) $(VERSION_CFLAGS) $(BUILD_CFLAGS) -c -o $@ $<
 
-$(DEBUG_OBJECT_DIR)/%.o: src/%.c $(HEADERS) | $(DEBUG_BUILD_DIR)
+$(DEBUG_OBJECT_DIR)/%.o: src/%.c $(HEADERS) Makefile | $(DEBUG_BUILD_DIR)
 	mkdir -p $(dir $@)
-	$(CC) $(BASE_CFLAGS) $(DEBUG_CFLAGS) -c -o $@ $<
+	$(CC) $(BASE_CFLAGS) $(VERSION_CFLAGS) $(DEBUG_CFLAGS) -c -o $@ $<
 
 $(DEBUG_BUILD_DIR)/$(OUTPUT): $(DEBUG_OBJECTS) | $(DEBUG_BUILD_DIR)
 	$(CC) $(BASE_CFLAGS) $(DEBUG_CFLAGS) $(LDFLAGS) -o $@ $(DEBUG_OBJECTS)

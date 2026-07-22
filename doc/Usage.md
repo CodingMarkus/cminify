@@ -1,7 +1,7 @@
 WebMinCer usage
 ===============
 
-WebMinCer minifies CSS, JavaScript, XML, HTML, and JSON. It writes the minified result to standard output, so the caller chooses where to save it. For the minification behavior and its scope, see [Minification](Minification.md).
+WebMinCer minifies UTF-8 CSS, JavaScript, XML, HTML, and JSON. It writes the minified result to standard output, so the caller chooses where to save it. For the minification behavior and its scope, see [Minification](Minification.md).
 
 
 Command-line reference
@@ -39,7 +39,7 @@ OPTIONS
                             Compact whitespace in HTML and XML text
                             nodes. This can change the rendered layout.
 
-    --version               Print version 1.0.
+    --version               Print the version.
 
 
 NOTES

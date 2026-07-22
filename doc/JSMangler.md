@@ -120,6 +120,8 @@ Global names are never reused and always begin with `G`:
 - `GA` through `GZ`.
 - `G00`, `G01`, and so on.
 
+Before names are assigned, eligible bindings are ordered by their frequency within the enclosing function or module. More frequent bindings receive shorter names first. Ties retain declaration order for deterministic output.
+
 The prefixes avoid collisions with JavaScript reserved words and make global mangled names visually distinct. The first implementation uses one local name allocator per function tree and prioritizes safe reuse across disjoint functions over maximum reuse across sibling blocks.
 
 

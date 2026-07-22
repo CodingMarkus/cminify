@@ -11,8 +11,6 @@ Development documents
 
 - [Utilities](dev/Utilities.md) provides a short overview of the development utilities.
 
-- [C Coding Style Cheat Sheet](CodingStyleCheatSheet-C.md) summarizes the C coding style.
-
 - [Deployment](dev/Deploy.md) explains cross-platform release builds.
 
 - [Minification](Minification.md) describes the supported minification behavior and its scope.

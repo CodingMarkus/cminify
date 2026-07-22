@@ -27,6 +27,7 @@ struct JsMangleBinding {
 	struct JsMangleNameIndex * nameIndex;
 	char replacement[16];
 	size_t replacementLength;
+	size_t frequency;
 	bool importBare;
 };
 
@@ -1063,7 +1064,7 @@ static bool jsMangleAddBinding(
 		return (false);
 	}
 	(*bindings)[*bindingsLength]
-		= (struct JsMangleBinding){name, length, NULL, "", 0, false};
+		= (struct JsMangleBinding){name, length, NULL, "", 0, 0, false};
 	*bindingsLength += 1;
 	return (true);
 }
@@ -1265,6 +1266,32 @@ static size_t jsMangleNameCount(
 		count += 1;
 	}
 	return (count);
+}
+
+
+static void jsMangleSortBindingsByFrequency(
+	struct JsMangleProgram * program,
+	const char * js,
+	size_t start,
+	size_t end,
+	struct JsMangleBinding * bindings,
+	size_t bindingsLength
+)
+{
+	for (size_t i = 0; i < bindingsLength; i += 1) {
+		bindings[i].frequency = jsMangleNameCount(
+			program, js, start, end, bindings[i].name, bindings[i].length);
+	}
+	for (size_t i = 1; i < bindingsLength; i += 1) {
+		struct JsMangleBinding binding = bindings[i];
+		size_t bindingI = i;
+		while (bindingI > 0
+			&& bindings[bindingI - 1].frequency < binding.frequency) {
+			bindings[bindingI] = bindings[bindingI - 1];
+			bindingI -= 1;
+		}
+		bindings[bindingI] = binding;
+	}
 }
 
 
@@ -3115,6 +3142,8 @@ static bool jsMangleFunction(
 		goto done;
 	}
 	size_t editStart = nameStart < nameEnd ? nameStart : paramsStart;
+	jsMangleSortBindingsByFrequency(
+		program, js, editStart, bodyEnd, bindings, bindingsLength);
 	if (!jsMangleAssignNames(program,
 							 js,
 							 editStart,
@@ -3288,6 +3317,13 @@ struct Minification MangleJSIdentifiers( const char * js, bool forceModule )
 					 "Cannot allocate memory (global collection)\n");
 			goto error;
 		}
+		jsMangleSortBindingsByFrequency(
+			&program,
+			js,
+			0,
+			length,
+			globalBindings,
+			globalBindingsLength);
 		if (!jsMangleAssignGlobalNames(&program,
 									   js,
 									   length,

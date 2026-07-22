@@ -27,6 +27,8 @@ The CSS minifier removes comments and unnecessary whitespace, including whitespa
 
 - Shortening hexadecimal colours such as `#aabbcc` to `#abc` when possible.
 
+- Converting comma-separated integer and endpoint-percentage `rgb()` colours to shorter named or hexadecimal alternatives.
+
 - Converting selected exact units when their shorter equivalent is known.
 
 CSS is minified both as standalone input and inside HTML and XML style elements.
@@ -43,7 +45,7 @@ JavaScript is minified both as standalone input and inside HTML and XML script e
 JSON
 ----
 
-The JSON minifier validates the complete document and removes whitespace outside strings. It preserves string contents, number spellings, object keys, array order, and literal values. Invalid JSON is rejected with an error.
+The JSON minifier validates the complete document and removes whitespace outside strings. Input is expected to use UTF-8. It shortens Unicode escapes when the decoded UTF-8 representation is shorter and preserves escapes required for valid JSON or safe embedded JSON. It preserves string contents, number spellings, object keys, array order, and literal values. Invalid JSON is rejected with an error.
 
 JSON is minified both as standalone input and in script elements with the `application/json+ld` or `importmap` type.
 
@@ -51,7 +53,7 @@ JSON is minified both as standalone input and in script elements with the `appli
 HTML and XML
 ------------
 
-The HTML and XML minifiers remove comments and whitespace that is insignificant to markup syntax. They preserve tag and attribute content where changing it could affect the document. They recognize embedded script, style, and supported JSON data and pass that content through the relevant minifier. JavaScript modules are recognized through `type="module"`, and classic JavaScript through `type="text/javascript"` or the default script type.
+The HTML and XML minifiers remove comments and whitespace that is insignificant to markup syntax. The HTML minifier also removes quotes from safe attribute values and omits redundant empty and boolean attribute values. XML attribute syntax is preserved. They recognize embedded script, style, and supported JSON data and pass that content through the relevant minifier. JavaScript modules are recognized through `type="module"`, and classic JavaScript through `type="text/javascript"` or the default script type.
 
 HTML and XML text nodes are preserved by default because CSS can make any element preserve whitespace. Use `--compact-ws` to compact whitespace in text nodes when a layout change is acceptable.
 
@@ -71,10 +73,6 @@ Possible future work
 
 - Highly restricted JavaScript property mangling for deliberately closed-world bundler output that follows an explicit property-name convention. Bundling alone does not make it safe because property names can be observed dynamically or used by external code.
 
-- Frequency-based JavaScript mangled-name assignment.
+- More CSS colour and function reductions, such as safe `hsl()` alternatives.
 
-- More CSS colour and function reductions, such as safe `rgb()` and `hsl()` alternatives.
-
-- Safe JSON escape shortening, such as replacing selected `\uXXXX` escapes with UTF-8.
-
-- Opt-in HTML reductions: unquoted safe attributes, boolean attributes, and optional tags. These need particularly careful compatibility testing.
+- UTF-16 input support.

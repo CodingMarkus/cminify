@@ -217,6 +217,7 @@ assertHelpOutput "$tmpDir/help-double-dash"
 assertStdout --version
 	cp "$tmpDir/stdout" "$tmpDir/version"
 assertNoTabsOrLongLines "$tmpDir/version"
-assertContains '1.0' "$tmpDir/version"
+assertContains "$(make --no-print-directory --silent version)" \
+	"$tmpDir/version"
 
 testSuccess

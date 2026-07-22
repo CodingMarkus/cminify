@@ -15,6 +15,7 @@ RUN apt-get update \
 		make \
 		qemu-user \
 		zip \
+		unzip \
 		xz-utils \
 	&& rm -rf /var/lib/apt/lists/*
 

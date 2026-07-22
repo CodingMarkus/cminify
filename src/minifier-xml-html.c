@@ -532,6 +532,96 @@ static bool xmlhtmlIsJavascriptUrl( const char * value, bool isXml )
 }
 
 
+static bool xmlhtmlMatchesName(
+	const char * value, size_t valueLength, const char * name
+)
+{
+	return (valueLength == strlen(name) && !StrNICmp(value, name, valueLength));
+}
+
+
+static bool xmlhtmlIsBooleanAttribute(
+	const char * tag,
+	size_t tagLength,
+	const char * attribute,
+	size_t attributeLength
+)
+{
+	if (xmlhtmlMatchesName(attribute, attributeLength, "autofocus")
+		|| xmlhtmlMatchesName(attribute, attributeLength, "inert")
+		|| xmlhtmlMatchesName(attribute, attributeLength, "itemscope")) {
+		return (true);
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "allowfullscreen")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "iframe"));
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "async")
+		|| xmlhtmlMatchesName(attribute, attributeLength, "defer")
+		|| xmlhtmlMatchesName(attribute, attributeLength, "nomodule")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "script"));
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "autoplay")
+		|| xmlhtmlMatchesName(attribute, attributeLength, "controls")
+		|| xmlhtmlMatchesName(attribute, attributeLength, "loop")
+		|| xmlhtmlMatchesName(attribute, attributeLength, "muted")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "audio")
+			|| xmlhtmlMatchesName(tag, tagLength, "video"));
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "checked")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "input"));
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "default")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "track"));
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "disabled")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "button")
+			|| xmlhtmlMatchesName(tag, tagLength, "fieldset")
+			|| xmlhtmlMatchesName(tag, tagLength, "input")
+			|| xmlhtmlMatchesName(tag, tagLength, "optgroup")
+			|| xmlhtmlMatchesName(tag, tagLength, "option")
+			|| xmlhtmlMatchesName(tag, tagLength, "select")
+			|| xmlhtmlMatchesName(tag, tagLength, "textarea"));
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "formnovalidate")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "button")
+			|| xmlhtmlMatchesName(tag, tagLength, "input"));
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "ismap")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "img"));
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "multiple")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "input")
+			|| xmlhtmlMatchesName(tag, tagLength, "select"));
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "required")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "input")
+			|| xmlhtmlMatchesName(tag, tagLength, "select")
+			|| xmlhtmlMatchesName(tag, tagLength, "textarea"));
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "novalidate")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "form"));
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "open")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "details")
+			|| xmlhtmlMatchesName(tag, tagLength, "dialog"));
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "playsinline")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "video"));
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "readonly")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "input")
+			|| xmlhtmlMatchesName(tag, tagLength, "textarea"));
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "reversed")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "ol"));
+	}
+	if (xmlhtmlMatchesName(attribute, attributeLength, "selected")) {
+		return (xmlhtmlMatchesName(tag, tagLength, "option"));
+	}
+	return (false);
+}
+
+
 static struct Minification minifyJsHandler( const char * js )
 {
 	const char prefix[] = "function a(){";
@@ -1125,7 +1215,6 @@ static struct Minification minifyXmlhtml( const char * xmlhtml, bool isXml )
 				goto error;
 			}
 
-			m.result[resultLength++] = '=';
 			char originalQuote = '\0';
 			bool copyRawValue = true;
 			bool originalNeedQuotes = false;
@@ -1192,6 +1281,19 @@ static struct Minification minifyXmlhtml( const char * xmlhtml, bool isXml )
 				m.errorPosition = i + decodedValue.errorPosition;
 				m.result = decodedValue.result;
 				goto error;
+			}
+			bool omitAttributeValue = false;
+			if (!isXml && decodedValue.result[0] == '\0') {
+				omitAttributeValue = true;
+			} else if (!isXml
+				&& xmlhtmlIsBooleanAttribute(
+					currentTag, currentTagLength, attribute, attributeLength)
+				&& strlen(decodedValue.result) == attributeLength
+				&& !StrNICmp(attribute, decodedValue.result, attributeLength)) {
+				omitAttributeValue = true;
+			}
+			if (!omitAttributeValue) {
+				m.result[resultLength++] = '=';
 			}
 			if (currentTagLength == sizeof "script" - 1
 				&& !tagncmp(currentTag, "script", sizeof "script" - 1)
@@ -1313,7 +1415,7 @@ static struct Minification minifyXmlhtml( const char * xmlhtml, bool isXml )
 				}
 				free(encodedValue.data);
 			}
-			if (copyRawValue) {
+			if (copyRawValue && !omitAttributeValue) {
 				if (!ensureResultCapacity(
 						&m.result,
 						&resultCapacity,
