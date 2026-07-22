@@ -309,6 +309,22 @@ static const char * shorterColorName( const char * color, size_t colorLength )
 }
 
 
+static void appendMinifiedColor(
+	const char * color, size_t colorLength, char * result, size_t * resultLength
+)
+{
+	const char * colorName = shorterColorName(color, colorLength);
+	if (colorName != NULL && strlen(colorName) < colorLength + 1) {
+		memcpy(&result[*resultLength], colorName, strlen(colorName));
+		*resultLength += strlen(colorName);
+	} else {
+		result[(*resultLength)++] = '#';
+		memcpy(&result[*resultLength], color, colorLength);
+		*resultLength += colorLength;
+	}
+}
+
+
 static size_t minifyHexColor(
 	const char * css, size_t i, char * result, size_t * resultLength
 )
@@ -331,15 +347,7 @@ static size_t minifyHexColor(
 	}
 	shortenHexColor(color, &colorLength);
 
-	const char * colorName = shorterColorName(color, colorLength);
-	if (colorName != NULL && strlen(colorName) < colorLength + 1) {
-		memcpy(&result[*resultLength], colorName, strlen(colorName));
-		*resultLength += strlen(colorName);
-	} else {
-		result[(*resultLength)++] = '#';
-		memcpy(&result[*resultLength], color, colorLength);
-		*resultLength += colorLength;
-	}
+	appendMinifiedColor(color, colorLength, result, resultLength);
 	return (inputLength + 1);
 }
 
@@ -364,18 +372,95 @@ static size_t minifyColorName(
 		size_t colorLength = sizeof "000000" - 1;
 		shortenHexColor(color, &colorLength);
 
-		const char * colorName = shorterColorName(color, colorLength);
-		if (colorName != NULL && strlen(colorName) < colorLength + 1) {
-			memcpy(&result[*resultLength], colorName, strlen(colorName));
-			*resultLength += strlen(colorName);
-		} else {
-			result[(*resultLength)++] = '#';
-			memcpy(&result[*resultLength], color, colorLength);
-			*resultLength += colorLength;
-		}
+		appendMinifiedColor(color, colorLength, result, resultLength);
 		return (inputLength);
 	}
 	return (0);
+}
+
+
+static void skipWhitespaces( const char * css, size_t * i )
+{
+	while (IsWhitespace(css[*i])) {
+		*i += 1;
+	}
+}
+
+
+static bool parseColorComponent(
+	const char * css,
+	size_t * i,
+	unsigned int * component,
+	bool * isPercentage
+)
+{
+	if (!isdigit((unsigned char) css[*i])) {
+		return (false);
+	}
+
+	unsigned int value = 0;
+	do {
+		value = value * 10 + (unsigned int) (css[*i] - '0');
+		if (value > 255) {
+			return (false);
+		}
+		*i += 1;
+	} while (isdigit((unsigned char) css[*i]));
+	*isPercentage = (css[*i] == '%');
+	if (*isPercentage) {
+		if (value != 0 && value != 100) {
+			return (false);
+		}
+		value = value * 255 / 100;
+		*i += 1;
+	}
+	*component = value;
+	return (true);
+}
+
+
+static size_t minifyRGBColor(
+	const char * css, size_t i, char * result, size_t * resultLength
+)
+{
+	if (StrNICmp(&css[i], "rgb(", sizeof "rgb(" - 1)) {
+		return (0);
+	}
+
+	size_t colorI = i + sizeof "rgb(" - 1;
+	unsigned int components[ 3 ];
+	bool percentageComponents = false;
+	for (size_t componentI = 0; componentI < 3; componentI += 1) {
+		bool isPercentage;
+		skipWhitespaces(css, &colorI);
+		if (!parseColorComponent(
+				css, &colorI, &components[componentI], &isPercentage)) {
+			return (0);
+		}
+		if (componentI == 0) {
+			percentageComponents = isPercentage;
+		} else if (isPercentage != percentageComponents) {
+			return (0);
+		}
+		skipWhitespaces(css, &colorI);
+		if (componentI < 2 && css[colorI++] != ',') {
+			return (0);
+		}
+	}
+	if (css[colorI] != ')') {
+		return (0);
+	}
+
+	char color[ 6 ];
+	for (size_t componentI = 0; componentI < 3; componentI += 1) {
+		static const char HEX_DIGITS[] = "0123456789abcdef";
+		color[componentI * 2] = HEX_DIGITS[components[componentI] >> 4];
+		color[componentI * 2 + 1] = HEX_DIGITS[components[componentI] & 15];
+	}
+	size_t colorLength = sizeof color;
+	shortenHexColor(color, &colorLength);
+	appendMinifiedColor(color, colorLength, result, resultLength);
+	return (colorI - i + 1);
 }
 
 
@@ -961,6 +1046,15 @@ struct Minification MinifyCSS( const char * css )
 			&& isColorProperty(m.result, resultLength)) {
 			size_t colorLength
 				= minifyHexColor(css, i, m.result, &resultLength);
+			if (colorLength != 0) {
+				i += colorLength;
+				continue;
+			}
+		}
+		if (syntaxBlock == SYNTAX_BLOCK_STYLE
+			&& isColorProperty(m.result, resultLength)) {
+			size_t colorLength
+				= minifyRGBColor(css, i, m.result, &resultLength);
 			if (colorLength != 0) {
 				i += colorLength;
 				continue;

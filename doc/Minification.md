@@ -27,6 +27,8 @@ The CSS minifier removes comments and unnecessary whitespace, including whitespa
 
 - Shortening hexadecimal colours such as `#aabbcc` to `#abc` when possible.
 
+- Converting comma-separated integer and endpoint-percentage `rgb()` colours to shorter named or hexadecimal alternatives.
+
 - Converting selected exact units when their shorter equivalent is known.
 
 CSS is minified both as standalone input and inside HTML and XML style elements.
@@ -73,7 +75,7 @@ Possible future work
 
 - Frequency-based JavaScript mangled-name assignment.
 
-- More CSS colour and function reductions, such as safe `rgb()` and `hsl()` alternatives.
+- More CSS colour and function reductions, such as safe `hsl()` alternatives.
 
 - Safe JSON escape shortening, such as replacing selected `\uXXXX` escapes with UTF-8.
 

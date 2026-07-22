@@ -95,4 +95,17 @@ expected="${expected}c{color:#000}"
 expected="${expected}d{color:#639}"
 assert "$expected" "$input"
 
+input='a{color:rgb(255,0,0);background:rgb(0, 0, 255);'
+input="${input}border:rgb(170, 187, 204);outline:rgb(0, 0, 0);"
+input="${input}fill:rgb(128,128,128);stroke:rgb(100%,0%,0%)}"
+expected='a{color:red;background:#00f;border:#abc;outline:#000;'
+expected="${expected}fill:gray;stroke:red}"
+assert "$expected" "$input"
+
+input='a{color:rgb(50%,0%,0%);background:rgb(255 0 0);'
+input="${input}border:rgb(256,0,0);outline:rgba(255,0,0,1)}"
+expected='a{color:rgb(50%,0%,0%);background:rgb(255 0 0);'
+expected="${expected}border:rgb(256,0,0);outline:rgba(255,0,0,1)}"
+assert "$expected" "$input"
+
 testSuccess
