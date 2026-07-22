@@ -86,7 +86,7 @@ override it, for example with `make CC=clang` or `make CC=gcc`.
 Pre-built releases
 ------------------
 
-Pre-built releases are available from the [Codeberg release page](https://codeberg.org/CodingMarkus/WebMinCer/releases). Download the binary-only archive for your operating system and processor architecture.
+Pre-built releases are available from the [Codeberg release page](https://codeberg.org/CodingMarkus/WebMinCer/releases). Download the binary archive for your operating system and processor architecture.
 
 - Linux x86: 32-bit i686. Download `WebMinCer_1.0_Linux-x86.tar.xz`, or `WebMinCer_1.0_Linux-x86-static.tar.xz` for a self-contained build.
 
@@ -102,9 +102,9 @@ Pre-built releases are available from the [Codeberg release page](https://codebe
 
 - Windows arm64: 64-bit ARM systems. Download `WebMinCer_1.0_Windows-arm64.zip`.
 
-Linux and macOS archives use the `.tar.xz` format. Windows archives use the `.zip` format. Binary-only archives contain only the release binary. Static Linux archives have `-static` in their names and do not require a system glibc installation.
+Linux and macOS archives use the `.tar.xz` format. Windows archives use the `.zip` format. Binary archives contain the release binary and a copy of `LICENSE`. Static Linux archives have `-static` in their names and do not require a system glibc installation.
 
-Developer archives have names such as `webmincer_1.0_dev_x86_64-linux-gnu.tar.xz`. They include the release binary, debugging symbols, and build information for developers who need them.
+Developer archives have names such as `webmincer_1.0_dev_x86_64-linux-gnu.tar.xz`. They include the release binary, debugging symbols, build information, and a copy of `LICENSE` for developers who need them.
 
 
 Origins and relationship to cminify

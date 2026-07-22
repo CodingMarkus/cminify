@@ -39,7 +39,7 @@ OPTIONS
                             Compact whitespace in HTML and XML text
                             nodes. This can change the rendered layout.
 
-    --version               Print version 1.0.
+    --version               Print the version.
 
 
 NOTES

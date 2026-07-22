@@ -1,11 +1,33 @@
 Release History
 ===============
 
+## [WebMinCer 1.1](https://codeberg.org/CodingMarkus/WebMinCer/releases/tag/release/1.1) (2026-07-22)
+
+### Smaller output
+
+#### What's new?
+
+- Minification of HTML attributes.
+
+- UTF-8 shortening for JSON strings.
+
+- Frequency-based JavaScript name mangling.
+
+#### What's been improved?
+
+- CSS color optimizations produce shorter output.
+
+- Release archives include version numbers and have an improved layout.
+
+- Download documentation with archive sizes and platform information.
+
+
+
 ## [WebMinCer 1.0](https://codeberg.org/CodingMarkus/WebMinCer/releases/tag/release/1.0) (2026-07-13)
 
 ### Transforming cminify to WebMinCer
 
-#### What is new?
+#### What's new?
 
 - Renamed the project from cminify to WebMinCer.
 
