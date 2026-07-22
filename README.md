@@ -1,7 +1,7 @@
 WebMinCer
 =========
 
-WebMinCer is a minifier for CSS, JavaScript, XML, HTML and JSON, written in C. It can also minify inline scripts, stylesheets and JSON data embedded in XML and HTML markup. JSON input is validated completely. For the other formats, many, though not all, classes of syntax errors are detected. When invalid input is recognized, precise error messages are printed.
+WebMinCer is a minifier for UTF-8 CSS, JavaScript, XML, HTML and JSON, written in C. It can also minify inline scripts, stylesheets and JSON data embedded in XML and HTML markup. JSON input is validated completely. For the other formats, many, though not all, classes of syntax errors are detected. When invalid input is recognized, precise error messages are printed.
 
 The original and actively developed project is hosted on [Codeberg](https://codeberg.org/CodingMarkus/WebMinCer). \
 Pre-built binary releases are also available on [Codeberg](https://codeberg.org/CodingMarkus/WebMinCer/releases). \

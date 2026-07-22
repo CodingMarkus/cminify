@@ -45,7 +45,7 @@ JavaScript is minified both as standalone input and inside HTML and XML script e
 JSON
 ----
 
-The JSON minifier validates the complete document and removes whitespace outside strings. It preserves string contents, number spellings, object keys, array order, and literal values. Invalid JSON is rejected with an error.
+The JSON minifier validates the complete document and removes whitespace outside strings. Input is expected to use UTF-8. It shortens Unicode escapes when the decoded UTF-8 representation is shorter and preserves escapes required for valid JSON or safe embedded JSON. It preserves string contents, number spellings, object keys, array order, and literal values. Invalid JSON is rejected with an error.
 
 JSON is minified both as standalone input and in script elements with the `application/json+ld` or `importmap` type.
 
@@ -77,6 +77,6 @@ Possible future work
 
 - More CSS colour and function reductions, such as safe `hsl()` alternatives.
 
-- Safe JSON escape shortening, such as replacing selected `\uXXXX` escapes with UTF-8.
+- UTF-16 input support.
 
 - Opt-in HTML reductions: unquoted safe attributes, boolean attributes, and optional tags. These need particularly careful compatibility testing.

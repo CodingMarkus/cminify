@@ -27,6 +27,105 @@ static size_t jsonLiteralLength( const char * json )
 }
 
 
+static unsigned int unicodeEscapeCodepoint( const char * escape )
+{
+	unsigned int codepoint = 0;
+	for (size_t i = 2; i < 6; i += 1) {
+		codepoint *= 16;
+		if (escape[i] >= '0' && escape[i] <= '9') {
+			codepoint += (unsigned int) (escape[i] - '0');
+		} else if (escape[i] >= 'a' && escape[i] <= 'f') {
+			codepoint += (unsigned int) (escape[i] - 'a' + 10);
+		} else {
+			codepoint += (unsigned int) (escape[i] - 'A' + 10);
+		}
+	}
+	return (codepoint);
+}
+
+
+static bool isUnicodeEscape( const char * escape )
+{
+	if (escape[0] != '\\' || escape[1] != 'u') {
+		return (false);
+	}
+	for (size_t i = 2; i < 6; i += 1) {
+		if (!((escape[i] >= '0' && escape[i] <= '9')
+			  || (escape[i] >= 'a' && escape[i] <= 'f')
+			  || (escape[i] >= 'A' && escape[i] <= 'F'))) {
+			return (false);
+		}
+	}
+	return (true);
+}
+
+
+static size_t appendShortenedUnicodeEscape(
+	const char * escape, char * result, size_t * resultLength
+)
+{
+	unsigned int codepoint = unicodeEscapeCodepoint(escape);
+	char escapedCharacter = '\0';
+	if (codepoint == '\b') {
+		escapedCharacter = 'b';
+	} else if (codepoint == '\t') {
+		escapedCharacter = 't';
+	} else if (codepoint == '\n') {
+		escapedCharacter = 'n';
+	} else if (codepoint == '\f') {
+		escapedCharacter = 'f';
+	} else if (codepoint == '\r') {
+		escapedCharacter = 'r';
+	} else if (codepoint == '"' || codepoint == '\\') {
+		escapedCharacter = (char) codepoint;
+	}
+	if (escapedCharacter != '\0') {
+		result[(*resultLength)++] = '\\';
+		result[(*resultLength)++] = escapedCharacter;
+		return (6);
+	}
+
+	if (codepoint >= ' ' && codepoint <= '~') {
+		if (strchr("&/<>", (int) codepoint) != NULL) {
+			return (0);
+		}
+		result[(*resultLength)++] = (char) codepoint;
+		return (6);
+	}
+	if (codepoint >= 0xD800u && codepoint <= 0xDBFFu) {
+		if (!isUnicodeEscape(&escape[6])) {
+			return (0);
+		}
+		const unsigned int lowSurrogate = unicodeEscapeCodepoint(&escape[6]);
+		if (lowSurrogate < 0xDC00u || lowSurrogate > 0xDFFFu) {
+			return (0);
+		}
+		codepoint = 0x10000u + (codepoint - 0xD800u) * 0x400u
+			+ lowSurrogate - 0xDC00u;
+	} else if (codepoint >= 0xDC00u && codepoint <= 0xDFFFu) {
+		return (0);
+	}
+
+	if (codepoint <= 0x7FFu) {
+		result[(*resultLength)++] = (char) (0xC0u + (codepoint >> 6));
+		result[(*resultLength)++] = (char) (0x80u + (codepoint & 0x3Fu));
+	} else if (codepoint <= 0xFFFFu) {
+		result[(*resultLength)++] = (char) (0xE0u + (codepoint >> 12));
+		result[(*resultLength)++]
+			= (char) (0x80u + ((codepoint >> 6) & 0x3Fu));
+		result[(*resultLength)++] = (char) (0x80u + (codepoint & 0x3Fu));
+	} else {
+		result[(*resultLength)++] = (char) (0xF0u + (codepoint >> 18));
+		result[(*resultLength)++]
+			= (char) (0x80u + ((codepoint >> 12) & 0x3Fu));
+		result[(*resultLength)++]
+			= (char) (0x80u + ((codepoint >> 6) & 0x3Fu));
+		result[(*resultLength)++] = (char) (0x80u + (codepoint & 0x3Fu));
+	}
+	return (codepoint > 0xFFFFu ? 12 : 6);
+}
+
+
 struct Minification MinifyJSON( const char * json )
 {
 	struct Minification m = {.result = malloc(strlen(json) + 1)};
@@ -150,6 +249,13 @@ struct Minification MinifyJSON( const char * json )
 								 (int)(k - i),
 								 &json[i]);
 						goto error;
+					}
+					size_t shortenedLength = appendShortenedUnicodeEscape(
+						&json[i], m.result, &resultLength);
+					if (shortenedLength != 0) {
+						i += shortenedLength;
+						activeBackslash = false;
+						continue;
 					}
 				}
 				m.result[resultLength++] = json[i];
