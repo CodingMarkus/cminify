@@ -108,7 +108,8 @@ do
 done
 input="${input},frequentName){return frequentName+frequentName+"
 input="${input}frequentName+frequentName+frequentName}"
-_mf_actual=$( printf '%b' "$input" | ./.build/webmincer js - --mangle )
+_mf_actual=$( printf '%b' "$input" \
+	| "${WEBMINCER_BINARY:-./.build/webmincer}" js - --mangle )
 case "$_mf_actual" in
 'function demo('*',_a,a){return a+a+a+a+a}') ;;
 *) testFail 'Frequency-based mangling did not prioritize frequentName:\n%s\n' \

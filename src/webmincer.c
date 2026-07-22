@@ -14,7 +14,7 @@
 
 static bool optionMangleOutput = false;
 static bool optionCompactWhitespace = false;
-static const char * const VERSION = "1.0";
+static const char * const VERSION = WEBMINCER_VERSION;
 
 struct Format {
 	const char * name;
@@ -82,13 +82,12 @@ static void printHelp( FILE * stream, const char * argv0 )
 		"                            Compact whitespace in HTML and XML text\n"
 		"                            nodes. This can change the rendered layout.\n"
 		"\n"
-		"    --version               Print version %s.\n"
+		"    --version               Print the version.\n"
 		"\n\n"
 		"NOTES\n"
 		"\n"
 		"    Use '-' as the input file to read from standard input.\n",
-		name,
-		VERSION);
+		name);
 }
 
 

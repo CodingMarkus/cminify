@@ -11,13 +11,12 @@ archiveDir="$deployDir/archives"
 archiveBinDir="$archiveDir/bin"
 archiveDevDir="$archiveDir/dev"
 buildDir="$deployDir/build"
+licenseFile=$(pwd)/LICENSE
 testScripts='test/stage1/test-build.sh test/stage1/test-cli.sh \
 	test/stage2/test-css.sh test/stage2/test-html.sh \
 	test/stage2/test-js-mangling.sh test/stage2/test-js.sh \
 	test/stage2/test-json.sh test/stage2/test-xml.sh'
-version=$(awk -F '"' \
-	'/^static const char \* const VERSION = / { print $2 }' \
-	src/webmincer.c)
+version=$(make --no-print-directory --silent version)
 
 case "$version" in
 	*.*.*.* | *..* | .* | *.)
@@ -119,14 +118,16 @@ archiveTarget( )
 		_archiveContents=$_target
 		_archiveName="webmincer_${version}_dev_${_target}"
 		_archiveSubdir=dev
+		cp "$licenseFile" "$buildDir/LICENSE"
 	else
 		_archiveName="WebMinCer_${version}_${_archiveName}"
 		_archiveContents="$_target/webmincer"
 		_archiveSubdir=bin
 		case "$_target" in
-			*-macos) _archiveFiles='webmincer macOS_SecurityWarning.txt' ;;
-			*) _archiveFiles=webmincer ;;
+			*-macos) _archiveFiles='webmincer macOS_SecurityWarning.txt LICENSE' ;;
+			*) _archiveFiles='webmincer LICENSE' ;;
 		esac
+		cp "$licenseFile" "$buildDir/$_target/LICENSE"
 	fi
 
 	case "$_target" in
@@ -137,19 +138,19 @@ archiveTarget( )
 			if [ -n "$_devSuffix" ]; then
 				(
 					cd "$buildDir"
-					rm -f "../archive/$_archiveSubdir/$_archiveName.zip"
+					rm -f "../archives/$_archiveSubdir/$_archiveName.zip"
 					zip -9 --quiet --recurse-paths \
-						"../archive/$_archiveSubdir/$_archiveName.zip" \
-						"$_archiveContents" \
+						"../archives/$_archiveSubdir/$_archiveName.zip" \
+						"$_archiveContents" LICENSE \
 						--exclude "$_target/obj/*"
 				)
 			else
 				(
 					cd "$buildDir/$_target"
-					rm -f "../../archive/$_archiveSubdir/$_archiveName.zip"
+					rm -f "../../archives/$_archiveSubdir/$_archiveName.zip"
 					zip -9 --quiet \
-						"../../archive/$_archiveSubdir/$_archiveName.zip" \
-						webmincer.exe
+						"../../archives/$_archiveSubdir/$_archiveName.zip" \
+						webmincer.exe LICENSE
 				)
 			fi
 			;;
@@ -157,22 +158,43 @@ archiveTarget( )
 			if [ -n "$_devSuffix" ]; then
 				(
 					cd "$buildDir"
-					rm -f "../archive/$_archiveSubdir/$_archiveName.tar.xz"
+					rm -f "../archives/$_archiveSubdir/$_archiveName.tar.xz"
 					tar --create --xz \
-						--file="../archive/$_archiveSubdir/$_archiveName.tar.xz" \
-						--exclude="$_target/obj" "$_archiveContents"
+						--file="../archives/$_archiveSubdir/$_archiveName.tar.xz" \
+						--exclude="$_target/obj" "$_archiveContents" LICENSE
 				)
 			else
 				(
-					cd "$buildDir/$_target"
-					rm -f "../../archive/$_archiveSubdir/$_archiveName.tar.xz"
+					cd "$buildDir"
+					rm -f "../archives/$_archiveSubdir/$_archiveName.tar.xz"
 					tar --create --xz \
-						--file="../../archive/$_archiveSubdir/$_archiveName.tar.xz" \
-						$_archiveFiles
+						--file="../archives/$_archiveSubdir/$_archiveName.tar.xz" \
+						--directory="$_target" $_archiveFiles
 				)
 			fi
 			;;
 	esac
+
+	case "$_target" in
+		*-windows-*)
+			verifyArchive="$archiveDir/$_archiveSubdir/$_archiveName.zip"
+			if ! unzip -Z1 "$verifyArchive" |
+				grep --fixed-strings --quiet --line-regexp LICENSE
+			then
+				printf 'Missing LICENSE in %s\n' "$verifyArchive" >&2
+				exit 1
+			fi
+			;;
+		*)
+			verifyArchive="$archiveDir/$_archiveSubdir/$_archiveName.tar.xz"
+			if ! tar --list --file="$verifyArchive" |
+				grep --fixed-strings --quiet --line-regexp LICENSE
+			then
+				printf 'Missing LICENSE in %s\n' "$verifyArchive" >&2
+				exit 1
+			fi
+			;;
+		esac
 }
 
 
